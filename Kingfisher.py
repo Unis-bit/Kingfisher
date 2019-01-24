@@ -159,7 +159,18 @@ async def int_to_roman(input):
       input -= ints[i] * count
    return result
 
-
+async def sid(loc):
+    if loc=="283841245975937034":
+        sid="detroit"
+    elif loc=="465651565089259521":
+        sid="gh"
+    elif loc=="406587085278150656":
+        sid="segovia"
+    elif loc=="434729592352276480":
+        sid="test"
+    else:
+        sid="undefined"
+    return sid
 
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
 async def specialWounds(client,ctx,case):
@@ -402,19 +413,23 @@ async def worm(*args):
 async def wiki(*args):
     await client.say("https://vanwiki.org/start")
 
-@client.command(description="Link a cape's vanwiki article.")
-async def cape(*cape):
+@client.command(pass_context=True,description="Link a cape's vanwiki article.")
+async def cape(ctx,*cape):
     cape=str(cape).replace(" ", "_")
     cape="".join(cape)
     cape=re.sub('\'|\,|\(|\)', '',cape)
-    domain="https://vanwiki.org/ic/cape/"+cape
+    loc=ctx.message.server.id
+    server=await sid(loc)
+    if loc=="undefined":
+        await client.add_reaction(ctx.message,"❌")
+    domain=f"https://vanwiki.org/{server}/cape/{cape}"
     async with aiohttp.get(domain, allow_redirects=False) as r:
         #print(r.text)
         status="Status"
         if status in await r.text():
-            await client.say("https://vanwiki.org/ic/cape/"+cape)
+            await client.say(domain)
         else:
-            await client.say("No such article. Create it at https://vanwiki.org/ic/cape/"+cape)
+            await client.say("No such article. Create it at "+domain)
 
 
 @client.command(pass_context=True,description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
