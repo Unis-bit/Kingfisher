@@ -159,6 +159,7 @@ async def int_to_roman(input):
       input -= ints[i] * count
    return result
 
+#figure out which server this command runs on. Remind me to actualyl write server configs one day. One day.
 async def sid(loc):
     if loc=="283841245975937034":
         sid="detroit"
@@ -355,6 +356,26 @@ async def updateFeed(ctx):
     tagsSheet = RefSheet.worksheet("Tags")
     tags = tagsSheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
+
+@client.command(pass_context=True, description="Fetches vials from our vial sheet.",hidden=True)
+async def vial(ctx, avial=None):
+    if avial!=None:
+        return
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
+    gc = gspread.authorize(credentials)
+    VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+    sheet = VialDoc.worksheet("Full Vials")
+    feed = sheet.get_all_values()
+    n=0
+    vials=[None]*int((len(feed)/4))
+    for i in range(1,len(feed)):
+        if feed[i][0]!='':
+            vials[n].append(feed[i])
+            n=n+1
+            print(vials)
+    print(feed)
+
+
 
 @client.command(pass_context=True, description="Accurate maps of Detroit! Try >rmap for a random map.", name="map", aliases=["rmap","maps"])
 async def _map(ctx):
