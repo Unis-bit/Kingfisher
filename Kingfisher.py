@@ -1,26 +1,27 @@
 from __future__ import print_function
-from oauth2client.service_account import ServiceAccountCredentials
 
-import discord
 import asyncio
-from discord.ext.commands import Bot
-from discord.ext import commands
-import platform
-import logging
-from PIL import Image, ImageDraw
-import random
-import re
-import gspread
-import aiohttp
-import time
 import datetime
-from pytz import timezone
-import pytz
 import json
-import os
+import logging
 import math
 import operator
+import os
+import platform
+import random
+import re
+import time
 import traceback
+
+import aiohttp
+import discord
+import gspread
+import pytz
+from discord.ext import commands
+from discord.ext.commands import Bot
+from oauth2client.service_account import ServiceAccountCredentials
+from PIL import Image, ImageDraw
+from pytz import timezone
 
 version="0.08 Vials"
 
@@ -43,6 +44,9 @@ logging.basicConfig(level=logging.INFO)
 #handler = logging.FileHandler(filename=f'discord.log', encoding='utf-8', mode='a')
 #handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 #logger.addHandler(handler)
+
+#pylint suppressions
+# pylint: disable=E0102, W1401
 
 
 # Setup the Sheets API
@@ -398,7 +402,7 @@ async def vial(ctx, avial=None):
         embed.add_field(name="R [Reliability]",value=output[9][3:],inline=False)
     embed.add_field(name=f"Case #1", value=output[3],inline=False)
     embed.add_field(name=f"Case #2", value=output[7],inline=False)
-     if len(output[11])>0:
+    if len(output[11])>0:
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await client.say(embed=embed)
 
@@ -407,8 +411,7 @@ async def vial(ctx, avial=None):
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
-    gid="#gid="
-    elif ctx.message.server.id=="465651565089259521":
+    if ctx.message.server.id=="465651565089259521":
         await client.say(playmap_gh)
     else:
         await client.say(playmap)
@@ -489,7 +492,7 @@ async def stopspam(ctx, i:int):
         return
     try:
         await client.purge_from(ctx.message.channel,limit=i,check=is_me)
-    except discord.Forbidden():
+    except discord.Forbidden:
         await client.say("Insufficient priviliges.")
 
 
@@ -656,7 +659,6 @@ async def toggle(ctx, req_role="Active"):
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
                  " Use >wound 'Hit Vitals' to find specfic wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
-    start=time.perf_counter()
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
@@ -749,14 +751,12 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
              embed = discord.Embed(title=typus["title"],colour=discord.Colour(typ_colours[typ]))
         else:
             embed = discord.Embed(colour=discord.Colour(typ_colours[typ]))
-        end=time.perf_counter()
-        ms=f"{end-start}ms"
         if "tag" in typus:
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {typus['tag']}",icon_url=ctx.message.author.avatar_url)
         else:
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {severity} {aim.casefold()} {repeatlist[j]}",icon_url=ctx.message.author.avatar_url)
         damages=[]
-        for x in range(0,repeatlist[j]):
+        for _ in range(0,repeatlist[j]):
              luck=random.randint(0,len(typlist)-1)
              damages.append(typlist[luck])
              embed.add_field(name=typlist[luck][3], value=f"{typlist[luck][4]}\n*Location: {typlist[luck][2]}, Stage: {typlist[luck][1]}*", inline=False)
