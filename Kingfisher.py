@@ -22,7 +22,7 @@ import math
 import operator
 import traceback
 
-version="0.07a MRGA"
+version="0.08 Vials"
 
 #keys for the map updating function
 factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60), "authority":(109, 130, 187),"leeches":(137, 90, 0),"eclipse":(0, 126, 133), "neutral":(255,255,255), "independent":(136, 0, 21), "sharks":(82, 95, 157), "hearth":(255, 215, 0) }
@@ -56,6 +56,9 @@ sheet = RefSheet.worksheet("Wounds")
 feed = sheet.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
+VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+sheet = VialDoc.worksheet("Full Vials")
+vialfeed = sheet.get_all_values()
 
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
@@ -159,7 +162,19 @@ async def int_to_roman(input):
       input -= ints[i] * count
    return result
 
-
+#figure out which server this command runs on. Remind me to actualyl write server configs one day. One day.
+async def sid(loc):
+    if loc=="283841245975937034":
+        sid="detroit"
+    elif loc=="465651565089259521":
+        sid="gh"
+    elif loc=="406587085278150656":
+        sid="segovia"
+    elif loc=="434729592352276480":
+        sid="test"
+    else:
+        sid="undefined"
+    return sid
 
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
 async def specialWounds(client,ctx,case):
@@ -336,6 +351,7 @@ async def updateFeed(ctx):
         return
     global feed
     global tags
+    global vialfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
@@ -343,7 +359,61 @@ async def updateFeed(ctx):
     feed = sheet.get_all_values()
     tagsSheet = RefSheet.worksheet("Tags")
     tags = tagsSheet.get_all_values()
+    VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+    sheet = VialDoc.worksheet("Full Vials")
+    vialfeed = sheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
+
+@client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.",hidden=True)
+async def vial(ctx, avial=None):
+    global vialfeed
+    n=0
+    vials=[[None]]*int((len(vialfeed)/4))
+    output=None
+    for i in range(1,len(vialfeed)):
+        if vialfeed[i][0]!='':
+            vials[n]=vialfeed[i]
+            vials[n].extend(vialfeed[i+1])
+            vials[n].extend(vialfeed[i+2])
+            n=n+1
+    if avial!=None:
+        for i in range(0,len(vials)):
+            if vials[i][0][:-1].casefold()==avial.casefold():
+                output=vials[i]
+    else:
+        out=random.randint(0,len(vials)-1)
+        output=vials[out]
+    
+    if output==None:
+        await client.say(f"Vial {avial} not found.")
+        return
+    
+    
+    print(output[0])
+    print(sum(len(i) for i in output))
+    vialcolour=discord.Colour(0x00ffc4)
+    embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
+    embed.add_field(name="P [Power]",value=output[5][3:],inline=False)
+    if len(output[9][3:])>0:
+        embed.add_field(name="R [Reliability]",value=output[9][3:],inline=False)
+    #await client.say(embed=embed)
+    
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed.add_field(name=f"Case #1", value=output[3],inline=False)
+    #await client.say(embed=embed)
+
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed.add_field(name=f"Case #2", value=output[7],inline=False)
+    #await client.say(embed=embed)
+
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    if len(output[11])>0:
+        embed.add_field(name=f"Case #3", value=output[11],inline=False)
+    await client.say(embed=embed)
+    #embed.set_footer(text=f"Sponsored by Cauldron",icon_url=ctx.message.author.avatar_url)
+
+
 
 @client.command(pass_context=True, description="Accurate maps of Detroit! Try >rmap for a random map.", name="map", aliases=["rmap","maps"])
 async def _map(ctx):
@@ -402,19 +472,23 @@ async def worm(*args):
 async def wiki(*args):
     await client.say("https://vanwiki.org/start")
 
-@client.command(description="Link a cape's vanwiki article.")
-async def cape(*cape):
+@client.command(pass_context=True,description="Link a cape's vanwiki article.")
+async def cape(ctx,*cape):
     cape=str(cape).replace(" ", "_")
     cape="".join(cape)
     cape=re.sub('\'|\,|\(|\)', '',cape)
-    domain="https://vanwiki.org/ic/cape/"+cape
+    loc=ctx.message.server.id
+    server=await sid(loc)
+    if loc=="undefined":
+        await client.add_reaction(ctx.message,"❌")
+    domain=f"https://vanwiki.org/{server}/cape/{cape}"
     async with aiohttp.get(domain, allow_redirects=False) as r:
         #print(r.text)
         status="Status"
         if status in await r.text():
-            await client.say("https://vanwiki.org/ic/cape/"+cape)
+            await client.say(domain)
         else:
-            await client.say("No such article. Create it at https://vanwiki.org/ic/cape/"+cape)
+            await client.say("No such article. Create it at "+domain)
 
 
 @client.command(pass_context=True,description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
