@@ -22,7 +22,7 @@ import math
 import operator
 import traceback
 
-version="0.07a MRGA"
+version="0.08 Vials"
 
 #keys for the map updating function
 factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60), "authority":(109, 130, 187),"leeches":(137, 90, 0),"eclipse":(0, 126, 133), "neutral":(255,255,255), "independent":(136, 0, 21), "sharks":(82, 95, 157), "hearth":(255, 215, 0) }
@@ -56,6 +56,9 @@ sheet = RefSheet.worksheet("Wounds")
 feed = sheet.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
+VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+sheet = VialDoc.worksheet("Full Vials")
+vialfeed = sheet.get_all_values()
 
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
@@ -348,6 +351,7 @@ async def updateFeed(ctx):
         return
     global feed
     global tags
+    global vialfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
@@ -355,25 +359,59 @@ async def updateFeed(ctx):
     feed = sheet.get_all_values()
     tagsSheet = RefSheet.worksheet("Tags")
     tags = tagsSheet.get_all_values()
-    await client.add_reaction(ctx.message,"\U00002714")
-
-@client.command(pass_context=True, description="Fetches vials from our vial sheet.",hidden=True)
-async def vial(ctx, avial=None):
-    if avial!=None:
-        return
-    credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
-    gc = gspread.authorize(credentials)
     VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
     sheet = VialDoc.worksheet("Full Vials")
-    feed = sheet.get_all_values()
+    vialfeed = sheet.get_all_values()
+    await client.add_reaction(ctx.message,"\U00002714")
+
+@client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.",hidden=True)
+async def vial(ctx, avial=None):
+    global vialfeed
     n=0
-    vials=[None]*int((len(feed)/4))
-    for i in range(1,len(feed)):
-        if feed[i][0]!='':
-            vials[n].append(feed[i])
+    vials=[[None]]*int((len(vialfeed)/4))
+    output=None
+    for i in range(1,len(vialfeed)):
+        if vialfeed[i][0]!='':
+            vials[n]=vialfeed[i]
+            vials[n].extend(vialfeed[i+1])
+            vials[n].extend(vialfeed[i+2])
             n=n+1
-            print(vials)
-    print(feed)
+    if avial!=None:
+        for i in range(0,len(vials)):
+            if vials[i][0][:-1].casefold()==avial.casefold():
+                output=vials[i]
+    else:
+        out=random.randint(0,len(vials)-1)
+        output=vials[out]
+    
+    if output==None:
+        await client.say(f"Vial {avial} not found.")
+        return
+    
+    
+    print(output[0])
+    print(sum(len(i) for i in output))
+    vialcolour=discord.Colour(0x00ffc4)
+    embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
+    embed.add_field(name="P [Power]",value=output[5][3:],inline=False)
+    if len(output[9][3:])>0:
+        embed.add_field(name="R [Reliability]",value=output[9][3:],inline=False)
+    #await client.say(embed=embed)
+    
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed.add_field(name=f"Case #1", value=output[3],inline=False)
+    #await client.say(embed=embed)
+
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed.add_field(name=f"Case #2", value=output[7],inline=False)
+    #await client.say(embed=embed)
+
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    if len(output[11])>0:
+        embed.add_field(name=f"Case #3", value=output[11],inline=False)
+    await client.say(embed=embed)
+    #embed.set_footer(text=f"Sponsored by Cauldron",icon_url=ctx.message.author.avatar_url)
 
 
 
