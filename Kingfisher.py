@@ -110,49 +110,6 @@ async def mapUpdate(faction,square,sid):
     detroitmap.save(f"map_{sid}/map.png") #output
     
 async def int_to_roman(input):
-   """
-   Convert an integer to Roman numerals.
-
-   Examples:
-   >>> int_to_roman(0)
-   Traceback (most recent call last):
-   ValueError: Argument must be between 1 and 3999
-
-   >>> int_to_roman(-1)
-   Traceback (most recent call last):
-   ValueError: Argument must be between 1 and 3999
-
-   >>> int_to_roman(1.5)
-   Traceback (most recent call last):
-   TypeError: expected integer, got <type 'float'>
-
-   >>> for i in range(1, 21): print int_to_roman(i)
-   ...
-   I
-   II
-   III
-   IV
-   V
-   VI
-   VII
-   VIII
-   IX
-   X
-   XI
-   XII
-   XIII
-   XIV
-   XV
-   XVI
-   XVII
-   XVIII
-   XIX
-   XX
-   >>> print int_to_roman(2000)
-   MM
-   >>> print int_to_roman(1999)
-   MCMXCIX
-   """
    if type(input) != type(1):
       raise TypeError(f"expected integer, got {type(input)}")
    if not 0 < input < 4000:
@@ -166,7 +123,7 @@ async def int_to_roman(input):
       input -= ints[i] * count
    return result
 
-#figure out which server this command runs on. Remind me to actualyl write server configs one day. One day.
+#figure out which server this command runs on. Remind me to actually write server configs one day. One day. xd.
 async def sid(loc):
     if loc=="283841245975937034":
         sid="detroit"
@@ -180,6 +137,7 @@ async def sid(loc):
         sid="undefined"
     return sid
 
+#Deals with special wounds that require more interaction. Most common used to roll the effects chains for critical wounds.
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
 async def specialWounds(client,ctx,case):
     ctx.invoked_with="wound"
@@ -224,6 +182,7 @@ async def specialWounds(client,ctx,case):
     elif (case=="Annihilated"):
         await ctx.invoke(roll,"3D7+0")
 
+#Translates wound severity from our shorthands back to the longer explicit version.
 async def severity_short(arg):
     if (arg=="lesser") or (arg=="les") or (arg=="l"):
         return "lesser"
@@ -239,12 +198,13 @@ def is_me(m):
     return m.author == client.user
 
 
-#global check to make sure blocked people can't mess up
+#global check to make sure blocked people can't mess around
 @client.check
 def mute_user(ctx):
     return ctx.message.author.id not in muted_usr
 
 #local check used in some functions only
+#Makes sure some functions cannot be used in pms
 def no_pm(ctx):
     return not ctx.message.server is None
 
@@ -278,10 +238,17 @@ async def order67(ctx):
         await client.say("😰")
         return
     await client.say("Oh. You're actually serious about this?")
+    #TODO: add confirmation
     chans=ctx.message.server.channels
     for i in chans:
         await client.delete_channel(i)
-        
+
+@client.command(pass_context=True, description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
+async def nest(ctx):
+    await client.say("https://discord.gg/gxQVAbA")
+
+#TODO: Conserve over restarts
+#TODO: ping all people who reacted the the reminder     
 @client.command(pass_context=True, description="Reminds you of shit. Time should be specified as 13s37m42h12d leaving away time steps as desired.", aliases=["rem"])
 async def remind(ctx,time,*message):
     timer=0
@@ -315,12 +282,14 @@ async def die(ctx):
     b_task.cancel()
     b_task2.cancel()
     await client.close()
-    
+
+#TODO: fix    
 @client.command(pass_context=True, description="Used to send messages via Kingfisher to all servers.",hidden=True)
 async def announce(ctx,*message:str):
     if ctx.message.author.id not in owner:
         return
     servs=client.servers
+    print(servs)
     targets=[]
     for i in servs:
         print(i.name)
@@ -328,12 +297,13 @@ async def announce(ctx,*message:str):
             if j.name=="general" or j.name=="chat":
                 print(j.name)
                 targets.append(j)
+    print(targets)
     for i in targets:
-        print(i)
         #await client.send_message(i,content=" ".join(message))
+        return
             
     
-@client.command(pass_context=True, description="Used to send messages via Kingfisher to a specific channel servers.",hidden=True)
+@client.command(pass_context=True, description="Used to send messages via Kingfisher to a specific channel.",hidden=True)
 async def tell(ctx,channel,*message:str):
     if ctx.message.author.id not in owner:
         return  
@@ -348,7 +318,7 @@ async def _eval(ctx, *, code):
     await client.say(eval(code))
     
 
-@client.command(pass_context=True, description="Refreshes the data from the reference doc. Owner only.",hidden=True)
+@client.command(pass_context=True, description="Refreshes the data from the reference docs. Owner only.",hidden=True)
 async def updateFeed(ctx):
     if ctx.message.author.id not in owner:
         await client.say("You weren't even a challenge.")
@@ -407,7 +377,7 @@ async def vial(ctx, avial=None):
     await client.say(embed=embed)
 
 
-@client.command(pass_context=True, description="Accurate maps of Detroit! Try >rmap for a random map.", name="map", aliases=["maps"])
+@client.command(pass_context=True, description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
@@ -495,9 +465,9 @@ async def stopspam(ctx, i:int):
     except discord.Forbidden:
         await client.say("Insufficient priviliges.")
 
-
+#TODO: fix id
 @client.command(pass_context=True,description="Fuck you.",hidden=True)
-async def mute(ctx,usr): #todo:fix id
+async def mute(ctx,usr): 
     if ctx.message.author.id not in owner:
         await client.say("This would be a fun game. But you already lost.")
         return
@@ -572,7 +542,8 @@ async def _time(ctx,):
     
     await client.say(embed=embed)
 
-@client.command(pass_context=True, description="Gives (or removes) the Active role for use in faction actions.")
+#TODO: Better QoL, list options, better configuration
+@client.command(pass_context=True, description="Gives (or removes) self-serve roles.")
 async def toggle(ctx, req_role="Active"):
     bye_emoji = discord.utils.get(client.get_all_emojis(), name='byedog')
     user = ctx.message.author
@@ -654,7 +625,7 @@ async def toggle(ctx, req_role="Active"):
             
            
     
-
+#Rolls wounds off of the Weaverdice wound table.
 @client.command(pass_context=True,aliases=["Bash","Pierce","Cut","Freeze","Shock","Rend","Burn","bash","pierce","cut","freeze","shock","rend","burn","Wound","Poison","poison"],
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
                  " Use >wound 'Hit Vitals' to find specfic wounds.")
@@ -769,7 +740,8 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     return True
 
 
-
+#dice rolling.
+#TODO: Add memorized rolls, roll series, independent dice
 @client.command(pass_context=True,description="See >tag roll for help",aliases=["r","R"])
 async def roll(ctx,formula="3d20+4",*comment):
     formula_in=formula
@@ -952,6 +924,7 @@ async def roll(ctx,formula="3d20+4",*comment):
 
 tag_muted=False #global
 
+#tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes.
 @client.command(pass_context=True,description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","Effect","Tag"])
 @commands.check(no_pm)
 async def tag(ctx, tag=None, content1=None, *,content2=None):
@@ -1012,6 +985,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             if not (await ctx.invoke(wound,severity=str(tag))):
                 await client.add_reaction(ctx.message,"❌")
 
+#Can use this to stop tag abuse
 @client.command(pass_context=True,hidden=True)
 async def tagToggle(ctx):
     global tag_muted
@@ -1027,6 +1001,7 @@ async def tagToggle(ctx):
     else:
         await client.say("Beep Boop. Error.")
 
+#convert from inches to cm. Very, very basic. 
 @client.command(pass_context=True,aliases=["conv"],description="Fuck the Imperial System.")
 async def convert(ctx, inches):
     ft_symbol="'"
@@ -1039,7 +1014,8 @@ async def convert(ctx, inches):
         inch=int(inches)
     await client.say(f"{inches} is equal to {inch*2.54}cm")
 
-#GLICKO MODulE
+#TODO: Replace with trueSkill
+#GLICKO MODUlE
 #defining parameters for the glicko system
 scale=173.7178
 tau=0.3
@@ -1509,7 +1485,7 @@ async def rank_decay():
             await asyncio.sleep(60*60*3) # task runs every 3 hours      
         
 
-###Runs here
+###Bot runs here
 with open("Token.txt", 'r') as f:
         token=f.read()
 client.run(token)
