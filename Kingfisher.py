@@ -364,6 +364,7 @@ async def updateFeed(ctx):
     vialfeed = sheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
 
+#fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
 @client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.",hidden=True)
 async def vial(ctx, avial=None):
     global vialfeed
@@ -376,6 +377,7 @@ async def vial(ctx, avial=None):
             vials[n].extend(vialfeed[i+1])
             vials[n].extend(vialfeed[i+2])
             n=n+1
+
     if avial!=None:
         for i in range(0,len(vials)):
             if vials[i][0][:-1].casefold()==avial.casefold():
@@ -388,44 +390,24 @@ async def vial(ctx, avial=None):
         await client.say(f"Vial {avial} not found.")
         return
     
-    
-    print(output[0])
-    print(sum(len(i) for i in output))
     vialcolour=discord.Colour(0x00ffc4)
     embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
     embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
     embed.add_field(name="P [Power]",value=output[5][3:],inline=False)
     if len(output[9][3:])>0:
         embed.add_field(name="R [Reliability]",value=output[9][3:],inline=False)
-    #await client.say(embed=embed)
-    
-    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
     embed.add_field(name=f"Case #1", value=output[3],inline=False)
-    #await client.say(embed=embed)
-
-    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
     embed.add_field(name=f"Case #2", value=output[7],inline=False)
-    #await client.say(embed=embed)
-
-    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
-    if len(output[11])>0:
+     if len(output[11])>0:
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await client.say(embed=embed)
-    #embed.set_footer(text=f"Sponsored by Cauldron",icon_url=ctx.message.author.avatar_url)
 
 
-
-@client.command(pass_context=True, description="Accurate maps of Detroit! Try >rmap for a random map.", name="map", aliases=["rmap","maps"])
+@client.command(pass_context=True, description="Accurate maps of Detroit! Try >rmap for a random map.", name="map", aliases=["maps"])
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
     gid="#gid="
-    maps={"Street with Cars":"0","Street With Cars 2":"886269561","Street With Verticality":"3865936","Railroad":"1143411491",
-          "Gas Station":"2036938228","Park":"949935105"}
-    if ctx.invoked_with=="rmap":
-        choice=random.choice(list(maps.keys()))
-        c_map=maps[choice]
-        await client.say("**{0}:**\n{1}{2}{3}".format(choice,playmap,gid,c_map))
     elif ctx.message.server.id=="465651565089259521":
         await client.say(playmap_gh)
     else:
