@@ -414,7 +414,7 @@ async def perk(ctx, category=None):
             await ctx.invoke(perk,category="power")
         elif luck[1]==3:
             ctx.invoked_with="flaw"
-            await ctx.invoke(flaw,category="life")
+            await ctx.invoke(perk,category="life")
         if typus==2 or typus==3:
             e_colour=discord.Colour(0x93C47D)
         if typus==4 or typus==5:
