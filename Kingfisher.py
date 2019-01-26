@@ -60,6 +60,8 @@ sheet = RefSheet.worksheet("Wounds")
 feed = sheet.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
+perksSheet = RefSheet.worksheet("Perks")
+perksfeed = perksSheet.get_all_values()
 VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
@@ -326,6 +328,7 @@ async def updateFeed(ctx):
     global feed
     global tags
     global vialfeed
+    global perksfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
@@ -336,10 +339,12 @@ async def updateFeed(ctx):
     VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
     sheet = VialDoc.worksheet("Full Vials")
     vialfeed = sheet.get_all_values()
+    perksSheet = RefSheet.worksheet("Perks")
+    perksfeed = perksSheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
 
 #fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
-@client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.",hidden=True)
+@client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.")
 async def vial(ctx, avial=None):
     global vialfeed
     n=0
@@ -375,6 +380,30 @@ async def vial(ctx, avial=None):
     if len(output[11])>0:
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await client.say(embed=embed)
+
+@client.command(pass_context=True, description="Perks and flaws.",aliases=["flaw"])
+async def perk(ctx, category=None):
+    global perksfeed
+    typus=0
+    if ctx.invoked_with.casefold()=="perk".casefold():
+        #perk is column 2 and 3
+        typus=typus+3
+    elif ctx.invoked_with.casefold()=="flaw".casefold():
+        #perk is column 4 and 5
+        typus=typus+5
+    if (category==None) or (category=="power"):
+        pass
+    elif category=="life":
+        typus=typus-1
+    out=random.randint(1,len(perksfeed)-3)
+    while perksfeed[out][typus]=="":
+        out=random.randint(1,len(perksfeed)-3)
+    
+    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    #embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
+    await client.say(perksfeed[out][typus])
+    
+
 
 
 @client.command(pass_context=True, description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
