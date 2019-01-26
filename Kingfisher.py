@@ -381,51 +381,79 @@ async def vial(ctx, avial=None):
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await client.say(embed=embed)
 
-@client.command(pass_context=True, description="Perks and flaws.",aliases=["flaw"])
+@client.command(pass_context=True, description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
-    #banned perks: alumnor, excessus, champion, carnificina, swelling power
+    e_colour=discord.Colour(0x989898)
     if ctx.invoked_with.casefold()=="perk".casefold():
         #perk is column 2 and 3
         typus=typus+3
+        e_colour=discord.Colour(0x93C47D)
     elif ctx.invoked_with.casefold()=="flaw".casefold():
         #perk is column 4 and 5
         typus=typus+5
+        e_colour=discord.Colour(0xE06666)
+    elif ctx.invoked_with.casefold()=="luck".casefold():
+        category="luck"
     if (category==None) or (category=="power"):
-        pass
+        pass #we default to power perks
+    elif category=="luck":
+        luck=[None, None]
+        luck[0]=random.randint(0,3)
+        luck[1]=random.randint(0,3)
+        typus=luck[0]+2
+        if luck[1]==0:
+            ctx.invoked_with="perk"
+            await ctx.invoke(perk,category="power")
+        elif luck[1]==1:
+            ctx.invoked_with="perk"
+            await ctx.invoke(perk,category="life")
+        elif luck[1]==2:
+            ctx.invoked_with="flaw"
+            await ctx.invoke(perk,category="power")
+        elif luck[1]==3:
+            ctx.invoked_with="flaw"
+            await ctx.invoke(flaw,category="life")
+        if typus==2 or typus==3:
+            e_colour=discord.Colour(0x93C47D)
+        if typus==4 or typus==5:
+            e_colour=discord.Colour(0xE06666)
     elif category=="life":
         typus=typus-1
     else:
         perkname=category
-        for typus in range(2,5):
-            for i in range(1,len(perksfeed)-3):
-                p_pattern=re.compile("(\w*\,?\s?\-?)+\.")
+        for typus in range(2,6):
+            for i in range(1,len(perksfeed)-2):
+                p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
                 p_match=p_pattern.search(perksfeed[i][typus])
-                if p_match:
-                    if p_match.group()[:-1].casefold()==perkname.casefold():
-                        embed = discord.Embed(title=ctx.invoked_with, colour=discord.Colour(0x00ffc4))
-                        embed.add_field(name=p_match.group()[:-1],value=perksfeed[i][typus][p_match.end():],inline=False)
+                if p_match: #required because there are some empty fields, and those don't return a p_match object at all, sadly
+                    if (p_match.group()[:-1].casefold()==perkname.casefold()) or (p_match.group()[:-1].casefold().replace(" ","")==perkname.casefold()):
+                        embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[i][typus][p_match.end():],colour=e_colour)
                         try:
                             await client.say(embed=embed)
                         except discord.HTTPException:
                             await client.say(perksfeed[i][typus])
-                        return
+        return
     out=random.randint(1,len(perksfeed)-3)
     while perksfeed[out][typus]=="":
         out=random.randint(1,len(perksfeed)-3)
     
-    print(out)
-    out=71
-    p_pattern=re.compile("(\w*\,?\s?\-?)+\.")
+    p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
     p_match=p_pattern.search(perksfeed[out][typus])
-    print(p_match)
-    print(perksfeed[out][typus])
-    embed = discord.Embed(title=ctx.invoked_with, colour=discord.Colour(0x00ffc4))
-    embed.add_field(name=p_match.group()[:-1],value=perksfeed[out][typus][p_match.end():],inline=False)
-    print(perksfeed[out][typus][p_match.end():])
     
-    try:
+    #dealing with banned perks
+    bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution"]
+    while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
+        print("banned perk rolled")
+        out=random.randint(1,len(perksfeed)-3)
+        while perksfeed[out][typus]=="":
+            out=random.randint(1,len(perksfeed)-3)
+        p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
+        p_match=p_pattern.search(perksfeed[out][typus])
+    #print(perksfeed[out][typus])
+    embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[out][typus][p_match.end():],colour=e_colour)
+    try: #sadly there are some perks that are too long for the embed field.
         await client.say(embed=embed)
     except discord.HTTPException:
         await client.say(perksfeed[out][typus])
