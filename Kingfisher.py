@@ -385,6 +385,7 @@ async def vial(ctx, avial=None):
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
+    #banned perks: alumnor, excessus, champion, carnificina, swelling power
     if ctx.invoked_with.casefold()=="perk".casefold():
         #perk is column 2 and 3
         typus=typus+3
@@ -395,13 +396,39 @@ async def perk(ctx, category=None):
         pass
     elif category=="life":
         typus=typus-1
+    else:
+        perkname=category
+        for typus in range(2,5):
+            for i in range(1,len(perksfeed)-3):
+                p_pattern=re.compile("(\w*\,?\s?\-?)+\.")
+                p_match=p_pattern.search(perksfeed[i][typus])
+                if p_match:
+                    if p_match.group()[:-1].casefold()==perkname.casefold():
+                        embed = discord.Embed(title=ctx.invoked_with, colour=discord.Colour(0x00ffc4))
+                        embed.add_field(name=p_match.group()[:-1],value=perksfeed[i][typus][p_match.end():],inline=False)
+                        try:
+                            await client.say(embed=embed)
+                        except discord.HTTPException:
+                            await client.say(perksfeed[i][typus])
+                        return
     out=random.randint(1,len(perksfeed)-3)
     while perksfeed[out][typus]=="":
         out=random.randint(1,len(perksfeed)-3)
     
-    #embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
-    #embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
-    await client.say(perksfeed[out][typus])
+    print(out)
+    out=71
+    p_pattern=re.compile("(\w*\,?\s?\-?)+\.")
+    p_match=p_pattern.search(perksfeed[out][typus])
+    print(p_match)
+    print(perksfeed[out][typus])
+    embed = discord.Embed(title=ctx.invoked_with, colour=discord.Colour(0x00ffc4))
+    embed.add_field(name=p_match.group()[:-1],value=perksfeed[out][typus][p_match.end():],inline=False)
+    print(perksfeed[out][typus][p_match.end():])
+    
+    try:
+        await client.say(embed=embed)
+    except discord.HTTPException:
+        await client.say(perksfeed[out][typus])
     
 
 
