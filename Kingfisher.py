@@ -370,7 +370,7 @@ async def vial(ctx, avial=None):
         return
     
     vialcolour=discord.Colour(0x00ffc4)
-    embed = discord.Embed(title=output[0][:-1], colour=vialcolour)
+    embed = discord.Embed(title=f"__{output[0][:-1]}__", colour=vialcolour,url="https://docs.google.com/spreadsheets/d/1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
     embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
     embed.add_field(name="P [Power]",value=output[5][3:],inline=False)
     if len(output[9][3:])>0:
@@ -385,19 +385,22 @@ async def vial(ctx, avial=None):
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
-    e_colour=discord.Colour(0x989898)
+    #2 perk life
+    #3 perk power
+    #4 flaw life
+    #5 flaw power
+    typus_name=[None,None,"Perk Life","Perk Power","Flaw Life","Flaw Power"]
+    typus_colour=[None,None,discord.Colour(0xB6D7A8),discord.Colour(0x93C47D),discord.Colour(0xEA9999),discord.Colour(0xE06666)]
     if ctx.invoked_with.casefold()=="perk".casefold():
         #perk is column 2 and 3
         typus=typus+3
-        e_colour=discord.Colour(0x93C47D)
     elif ctx.invoked_with.casefold()=="flaw".casefold():
-        #perk is column 4 and 5
+        #flaw is column 4 and 5
         typus=typus+5
-        e_colour=discord.Colour(0xE06666)
     elif ctx.invoked_with.casefold()=="luck".casefold():
         category="luck"
     if (category==None) or (category=="power"):
-        pass #we default to power perks
+        category="power" #we default to power perks
     elif category=="luck":
         luck=[None, None]
         luck[0]=random.randint(0,3)
@@ -415,10 +418,6 @@ async def perk(ctx, category=None):
         elif luck[1]==3:
             ctx.invoked_with="flaw"
             await ctx.invoke(perk,category="life")
-        if typus==2 or typus==3:
-            e_colour=discord.Colour(0x93C47D)
-        if typus==4 or typus==5:
-            e_colour=discord.Colour(0xE06666)
     elif category=="life":
         typus=typus-1
     else:
@@ -429,7 +428,8 @@ async def perk(ctx, category=None):
                 p_match=p_pattern.search(perksfeed[i][typus])
                 if p_match: #required because there are some empty fields, and those don't return a p_match object at all, sadly
                     if (p_match.group()[:-1].casefold()==perkname.casefold()) or (p_match.group()[:-1].casefold().replace(" ","")==perkname.casefold()):
-                        embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[i][typus][p_match.end():],colour=e_colour)
+                        embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[i][typus][p_match.end():],colour=typus_colour[typus])
+                        embed.set_footer(text=f"{typus_name[typus]}")
                         try:
                             await client.say(embed=embed)
                         except discord.HTTPException:
@@ -443,7 +443,7 @@ async def perk(ctx, category=None):
     p_match=p_pattern.search(perksfeed[out][typus])
     
     #dealing with banned perks
-    bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard"]
+    bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard","finemmane"]
     while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
         print("banned perk rolled")
         out=random.randint(1,len(perksfeed)-3)
@@ -452,7 +452,8 @@ async def perk(ctx, category=None):
         p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
         p_match=p_pattern.search(perksfeed[out][typus])
     #print(perksfeed[out][typus])
-    embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[out][typus][p_match.end():],colour=e_colour)
+    embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[out][typus][p_match.end():],colour=typus_colour[typus])
+    embed.set_footer(text=f"{typus_name[typus]}")
     try: #sadly there are some perks that are too long for the embed field.
         await client.say(embed=embed)
     except discord.HTTPException:
