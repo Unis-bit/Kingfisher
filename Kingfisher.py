@@ -55,6 +55,8 @@ scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/spreadsheets.readonly']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
 gc = gspread.authorize(credentials)
+
+#kingfisher reference doc
 RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
 sheet = RefSheet.worksheet("Wounds")
 feed = sheet.get_all_values()
@@ -64,6 +66,10 @@ perksSheet = RefSheet.worksheet("Perks")
 perksfeed = perksSheet.get_all_values()
 augSheet = RefSheet.worksheet("Augments")
 augfeed = augSheet.get_all_values()
+triggerSheet = RefSheet.worksheet("Triggers")
+triggerfeed = triggerSheet.get_all_values()
+
+#vials
 VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
@@ -332,6 +338,7 @@ async def updateFeed(ctx):
     global vialfeed
     global perksfeed
     global augfeed
+    global triggerfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
@@ -346,6 +353,8 @@ async def updateFeed(ctx):
     perksfeed = perksSheet.get_all_values()
     augSheet = RefSheet.worksheet("Augments")
     augfeed = augSheet.get_all_values()
+    triggerSheet = RefSheet.worksheet("Triggers")
+    triggerfeed = triggerSheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
 
 #fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
@@ -499,6 +508,19 @@ async def augment(ctx, classification=None, card=None):
                     return
                     #await client.say(augs[i])
         await client.say(f"No {card.title()} augment defined.")
+
+@client.command(pass_context=True, description="Trigger warning.",aliases=["Trigger"])
+async def trigger(ctx, id=None):
+    global triggerfeed
+    if id==None:
+        out=random.randint(0,len(triggerfeed))
+        while triggerfeed[out][0]=="":
+            out=random.randint(0,len(triggerfeed))
+        await client.say(f"Trigger #{out+1}: {triggerfeed[out][0]}")
+    else:
+        id=int(id)
+        await client.say(f"Trigger #{id} by {triggerfeed[id-1][1]}: {triggerfeed[id-1][0]}")
+
 
 @client.command(pass_context=True, description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
 async def _map(ctx):
