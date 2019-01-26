@@ -62,6 +62,8 @@ tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
 perksSheet = RefSheet.worksheet("Perks")
 perksfeed = perksSheet.get_all_values()
+augSheet = RefSheet.worksheet("Augments")
+augfeed = augSheet.get_all_values()
 VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
@@ -329,6 +331,7 @@ async def updateFeed(ctx):
     global tags
     global vialfeed
     global perksfeed
+    global augfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
@@ -341,6 +344,8 @@ async def updateFeed(ctx):
     vialfeed = sheet.get_all_values()
     perksSheet = RefSheet.worksheet("Perks")
     perksfeed = perksSheet.get_all_values()
+    augSheet = RefSheet.worksheet("Augments")
+    augfeed = augSheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
 
 #fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
@@ -381,7 +386,7 @@ async def vial(ctx, avial=None):
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await client.say(embed=embed)
 
-@client.command(pass_context=True, description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
+@client.command(pass_context=True, description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck","Flaw","Perk","Luck"])
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
@@ -460,7 +465,40 @@ async def perk(ctx, category=None):
         await client.say(perksfeed[out][typus])
     
 
-
+@client.command(pass_context=True, description="Roll augments. *>aug tinker*, or look up augs with *>aug tinker world*. You can see the short interpretation of the tarot card with *>aug world*",aliases=["aug","Aug"])
+async def augment(ctx, classification=None, card=None):
+    global augfeed
+    if classification==None:
+        await client.say("Need to know the classification. Blaster, Breaker, etc.")
+        return
+    augcolour=discord.Colour(0xBF9000)
+    classifications=["blaster","breaker","brute","changer","master","mover","shaker","stranger","striker","tinker","thinker","trump"]
+    cards=["fool","magi","nun","lady","lord","pope","lovers","chariot","strength","hermit","wheel","justice","hanged","death","temperance","devil","tower","star","moon","sun","judgement","world"]
+    if classification in cards:
+        await client.say(augfeed[cards.index(classification)+1][1])
+        return
+    augindex=classifications.index(classification.casefold())+2
+    if card==None:
+        out=random.randint(1,len(augfeed)-1)
+        if augfeed[out][augindex]!="":
+            embed = discord.Embed(title=f"{classification.title()} Augment",description=augfeed[out][augindex],colour=augcolour)
+            await client.say(embed=embed)
+            #await client.say(augfeed[out][augindex])
+        else:
+            embed = discord.Embed(title=f"{classification.title()} Augment - General",description=f"**{augfeed[out][0].title()}**: {augfeed[out][1]}",colour=augcolour)
+            await client.say(embed=embed)
+            #await client.say(f"**{augfeed[out][0].title()}**: {augfeed[out][1]}")
+    else:
+        augs=[i[augindex] for i in augfeed]
+        p_pattern=re.compile("\w*\.")
+        for i in range(0,len(augs)):
+            p_match=p_pattern.search(augs[i])
+            if p_match:
+                if p_match.group()[:-1].casefold()==card.casefold(): 
+                    await client.say(embed=discord.Embed(title=f"{classification.title()} Augment",description=augs[i],colour=augcolour))
+                    return
+                    #await client.say(augs[i])
+        await client.say(f"No {card.title()} augment defined.")
 
 @client.command(pass_context=True, description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
 async def _map(ctx):
