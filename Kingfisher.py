@@ -443,7 +443,7 @@ async def perk(ctx, category=None):
     p_match=p_pattern.search(perksfeed[out][typus])
     
     #dealing with banned perks
-    bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution"]
+    bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard"]
     while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
         print("banned perk rolled")
         out=random.randint(1,len(perksfeed)-3)
