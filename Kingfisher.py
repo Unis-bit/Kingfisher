@@ -359,7 +359,7 @@ async def vial(ctx, avial=None):
 
     if avial!=None:
         for i in range(0,len(vials)):
-            if vials[i][0][:-1].casefold()==avial.casefold():
+            if vials[i][0].casefold()==avial.casefold():
                 output=vials[i]
     else:
         out=random.randint(0,len(vials)-1)
@@ -370,7 +370,7 @@ async def vial(ctx, avial=None):
         return
     
     vialcolour=discord.Colour(0x00ffc4)
-    embed = discord.Embed(title=f"__{output[0][:-1]}__", colour=vialcolour,url="https://docs.google.com/spreadsheets/d/1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+    embed = discord.Embed(title=f"__{output[0]}__", colour=vialcolour,url="https://docs.google.com/spreadsheets/d/1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
     embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
     embed.add_field(name="P [Power]",value=output[5][3:],inline=False)
     if len(output[9][3:])>0:
