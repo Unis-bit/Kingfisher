@@ -1119,8 +1119,10 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             gc = gspread.authorize(credentials)
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
             tagsSheet = RefSheet.worksheet("Tags")
-            target_tag=tagsSheet.find(content1.casefold())
-            if target_tag.row!=1:
+            target_tag=tagsSheet.find(content1.casefold()) #change to findall, discard non-titles
+            print(f"{target_tag.row},{target_tag.col}")
+            if target_tag.col!=1:
+                print("tag column error!")
                 return
             if ctx.message.author.id==tagsSheet.cell(target_tag.row, target_tag.col+2).value or ctx.message.author.id=="138340069311381505":
                 tagsSheet.update_cell(target_tag.row,target_tag.col+1, content2)
