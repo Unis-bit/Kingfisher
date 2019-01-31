@@ -24,6 +24,10 @@ from PIL import Image, ImageDraw
 from pytz import timezone
 
 version="0.08 Vials"
+###useful resources
+#for colours
+#www.htmlcsscolor.com/hex
+
 
 #keys for the map updating function
 factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60), "authority":(109, 130, 187),"leeches":(137, 90, 0),"eclipse":(0, 126, 133), "neutral":(255,255,255), "independent":(136, 0, 21), "sharks":(82, 95, 157), "hearth":(255, 215, 0) }
@@ -1116,6 +1120,8 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
             tagsSheet = RefSheet.worksheet("Tags")
             target_tag=tagsSheet.find(content1.casefold())
+            if target_tag.row!=1:
+                return
             if ctx.message.author.id==tagsSheet.cell(target_tag.row, target_tag.col+2).value or ctx.message.author.id=="138340069311381505":
                 tagsSheet.update_cell(target_tag.row,target_tag.col+1, content2)
                 tags = tagsSheet.get_all_values()
