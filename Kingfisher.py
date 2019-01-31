@@ -1,28 +1,29 @@
 from __future__ import print_function
-from oauth2client.service_account import ServiceAccountCredentials
 
-import discord
 import asyncio
-from discord.ext.commands import Bot
-from discord.ext import commands
-import platform
-import logging
-from PIL import Image, ImageDraw
-import random
-import re
-import gspread
-import aiohttp
-import time
 import datetime
-from pytz import timezone
-import pytz
 import json
-import os
+import logging
 import math
 import operator
+import os
+import platform
+import random
+import re
+import time
 import traceback
 
-version="0.07a MRGA"
+import aiohttp
+import discord
+import gspread
+import pytz
+from discord.ext import commands
+from discord.ext.commands import Bot
+from oauth2client.service_account import ServiceAccountCredentials
+from PIL import Image, ImageDraw
+from pytz import timezone
+
+version="0.08 Vials"
 
 #keys for the map updating function
 factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60), "authority":(109, 130, 187),"leeches":(137, 90, 0),"eclipse":(0, 126, 133), "neutral":(255,255,255), "independent":(136, 0, 21), "sharks":(82, 95, 157), "hearth":(255, 215, 0) }
@@ -44,6 +45,9 @@ logging.basicConfig(level=logging.INFO)
 #handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 #logger.addHandler(handler)
 
+#pylint suppressions
+# pylint: disable=E0102, W1401
+
 
 # Setup the Sheets API
 scope = ['https://spreadsheets.google.com/feeds',
@@ -51,11 +55,24 @@ scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/spreadsheets.readonly']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
 gc = gspread.authorize(credentials)
+
+#kingfisher reference doc
 RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
 sheet = RefSheet.worksheet("Wounds")
 feed = sheet.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
+perksSheet = RefSheet.worksheet("Perks")
+perksfeed = perksSheet.get_all_values()
+augSheet = RefSheet.worksheet("Augments")
+augfeed = augSheet.get_all_values()
+triggerSheet = RefSheet.worksheet("Triggers")
+triggerfeed = triggerSheet.get_all_values()
+
+#vials
+VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+sheet = VialDoc.worksheet("Full Vials")
+vialfeed = sheet.get_all_values()
 
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
@@ -103,49 +120,6 @@ async def mapUpdate(faction,square,sid):
     detroitmap.save(f"map_{sid}/map.png") #output
     
 async def int_to_roman(input):
-   """
-   Convert an integer to Roman numerals.
-
-   Examples:
-   >>> int_to_roman(0)
-   Traceback (most recent call last):
-   ValueError: Argument must be between 1 and 3999
-
-   >>> int_to_roman(-1)
-   Traceback (most recent call last):
-   ValueError: Argument must be between 1 and 3999
-
-   >>> int_to_roman(1.5)
-   Traceback (most recent call last):
-   TypeError: expected integer, got <type 'float'>
-
-   >>> for i in range(1, 21): print int_to_roman(i)
-   ...
-   I
-   II
-   III
-   IV
-   V
-   VI
-   VII
-   VIII
-   IX
-   X
-   XI
-   XII
-   XIII
-   XIV
-   XV
-   XVI
-   XVII
-   XVIII
-   XIX
-   XX
-   >>> print int_to_roman(2000)
-   MM
-   >>> print int_to_roman(1999)
-   MCMXCIX
-   """
    if type(input) != type(1):
       raise TypeError(f"expected integer, got {type(input)}")
    if not 0 < input < 4000:
@@ -159,8 +133,21 @@ async def int_to_roman(input):
       input -= ints[i] * count
    return result
 
+#figure out which server this command runs on. Remind me to actually write server configs one day. One day. xd.
+async def sid(loc):
+    if loc=="283841245975937034":
+        sid="detroit"
+    elif loc=="465651565089259521":
+        sid="gh"
+    elif loc=="406587085278150656":
+        sid="segovia"
+    elif loc=="434729592352276480":
+        sid="test"
+    else:
+        sid="undefined"
+    return sid
 
-
+#Deals with special wounds that require more interaction. Most common used to roll the effects chains for critical wounds.
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
 async def specialWounds(client,ctx,case):
     ctx.invoked_with="wound"
@@ -205,6 +192,7 @@ async def specialWounds(client,ctx,case):
     elif (case=="Annihilated"):
         await ctx.invoke(roll,"3D7+0")
 
+#Translates wound severity from our shorthands back to the longer explicit version.
 async def severity_short(arg):
     if (arg=="lesser") or (arg=="les") or (arg=="l"):
         return "lesser"
@@ -220,12 +208,13 @@ def is_me(m):
     return m.author == client.user
 
 
-#global check to make sure blocked people can't mess up
+#global check to make sure blocked people can't mess around
 @client.check
 def mute_user(ctx):
     return ctx.message.author.id not in muted_usr
 
 #local check used in some functions only
+#Makes sure some functions cannot be used in pms
 def no_pm(ctx):
     return not ctx.message.server is None
 
@@ -259,10 +248,17 @@ async def order67(ctx):
         await client.say("😰")
         return
     await client.say("Oh. You're actually serious about this?")
+    #TODO: add confirmation
     chans=ctx.message.server.channels
     for i in chans:
         await client.delete_channel(i)
-        
+
+@client.command(pass_context=True, description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
+async def nest(ctx):
+    await client.say("https://discord.gg/gxQVAbA")
+
+#TODO: Conserve over restarts
+#TODO: ping all people who reacted the the reminder     
 @client.command(pass_context=True, description="Reminds you of shit. Time should be specified as 13s37m42h12d leaving away time steps as desired.", aliases=["rem"])
 async def remind(ctx,time,*message):
     timer=0
@@ -296,12 +292,14 @@ async def die(ctx):
     b_task.cancel()
     b_task2.cancel()
     await client.close()
-    
+
+#TODO: fix    
 @client.command(pass_context=True, description="Used to send messages via Kingfisher to all servers.",hidden=True)
 async def announce(ctx,*message:str):
     if ctx.message.author.id not in owner:
         return
     servs=client.servers
+    print(servs)
     targets=[]
     for i in servs:
         print(i.name)
@@ -309,12 +307,13 @@ async def announce(ctx,*message:str):
             if j.name=="general" or j.name=="chat":
                 print(j.name)
                 targets.append(j)
+    print(targets)
     for i in targets:
-        print(i)
         #await client.send_message(i,content=" ".join(message))
+        return
             
     
-@client.command(pass_context=True, description="Used to send messages via Kingfisher to a specific channel servers.",hidden=True)
+@client.command(pass_context=True, description="Used to send messages via Kingfisher to a specific channel.",hidden=True)
 async def tell(ctx,channel,*message:str):
     if ctx.message.author.id not in owner:
         return  
@@ -329,13 +328,17 @@ async def _eval(ctx, *, code):
     await client.say(eval(code))
     
 
-@client.command(pass_context=True, description="Refreshes the data from the reference doc. Owner only.",hidden=True)
+@client.command(pass_context=True, description="Refreshes the data from the reference docs. Owner only.",hidden=True)
 async def updateFeed(ctx):
     if ctx.message.author.id not in owner:
         await client.say("You weren't even a challenge.")
         return
     global feed
     global tags
+    global vialfeed
+    global perksfeed
+    global augfeed
+    global triggerfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
@@ -343,20 +346,187 @@ async def updateFeed(ctx):
     feed = sheet.get_all_values()
     tagsSheet = RefSheet.worksheet("Tags")
     tags = tagsSheet.get_all_values()
+    VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+    sheet = VialDoc.worksheet("Full Vials")
+    vialfeed = sheet.get_all_values()
+    perksSheet = RefSheet.worksheet("Perks")
+    perksfeed = perksSheet.get_all_values()
+    augSheet = RefSheet.worksheet("Augments")
+    augfeed = augSheet.get_all_values()
+    triggerSheet = RefSheet.worksheet("Triggers")
+    triggerfeed = triggerSheet.get_all_values()
     await client.add_reaction(ctx.message,"\U00002714")
 
-@client.command(pass_context=True, description="Accurate maps of Detroit! Try >rmap for a random map.", name="map", aliases=["rmap","maps"])
+#fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
+@client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.")
+async def vial(ctx, avial=None):
+    global vialfeed
+    n=0
+    vials=[[None]]*int((len(vialfeed)/4))
+    output=None
+    for i in range(1,len(vialfeed)):
+        if vialfeed[i][0]!='':
+            vials[n]=vialfeed[i]
+            vials[n].extend(vialfeed[i+1])
+            vials[n].extend(vialfeed[i+2])
+            n=n+1
+
+    if avial!=None:
+        for i in range(0,len(vials)):
+            if vials[i][0][:-1].casefold()==avial.casefold():
+                output=vials[i]
+    else:
+        out=random.randint(0,len(vials)-1)
+        output=vials[out]
+    
+    if output==None:
+        await client.say(f"Vial {avial} not found.")
+        return
+    
+    vialcolour=discord.Colour(0x00ffc4)
+    embed = discord.Embed(title=f"__{output[0][:-1]}__", colour=vialcolour,url="https://docs.google.com/spreadsheets/d/1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+    embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
+    embed.add_field(name="P [Power]",value=output[5][3:],inline=False)
+    if len(output[9][3:])>0:
+        embed.add_field(name="R [Reliability]",value=output[9][3:],inline=False)
+    embed.add_field(name=f"Case #1", value=output[3],inline=False)
+    embed.add_field(name=f"Case #2", value=output[7],inline=False)
+    if len(output[11])>0:
+        embed.add_field(name=f"Case #3", value=output[11],inline=False)
+    await client.say(embed=embed)
+
+@client.command(pass_context=True, description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck","Flaw","Perk","Luck"])
+async def perk(ctx, category=None):
+    global perksfeed
+    typus=0
+    #2 perk life
+    #3 perk power
+    #4 flaw life
+    #5 flaw power
+    typus_name=[None,None,"Perk Life","Perk Power","Flaw Life","Flaw Power"]
+    typus_colour=[None,None,discord.Colour(0xB6D7A8),discord.Colour(0x93C47D),discord.Colour(0xEA9999),discord.Colour(0xE06666)]
+    if ctx.invoked_with.casefold()=="perk".casefold():
+        #perk is column 2 and 3
+        typus=typus+3
+    elif ctx.invoked_with.casefold()=="flaw".casefold():
+        #flaw is column 4 and 5
+        typus=typus+5
+    elif ctx.invoked_with.casefold()=="luck".casefold():
+        category="luck"
+    if (category==None) or (category=="power"):
+        category="power" #we default to power perks
+    elif category=="luck":
+        luck=[None, None]
+        luck[0]=random.randint(0,3)
+        luck[1]=random.randint(0,3)
+        typus=luck[0]+2
+        if luck[1]==0:
+            ctx.invoked_with="perk"
+            await ctx.invoke(perk,category="power")
+        elif luck[1]==1:
+            ctx.invoked_with="perk"
+            await ctx.invoke(perk,category="life")
+        elif luck[1]==2:
+            ctx.invoked_with="flaw"
+            await ctx.invoke(perk,category="power")
+        elif luck[1]==3:
+            ctx.invoked_with="flaw"
+            await ctx.invoke(perk,category="life")
+    elif category=="life":
+        typus=typus-1
+    else:
+        perkname=category
+        for typus in range(2,6):
+            for i in range(1,len(perksfeed)-2):
+                p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
+                p_match=p_pattern.search(perksfeed[i][typus])
+                if p_match: #required because there are some empty fields, and those don't return a p_match object at all, sadly
+                    if (p_match.group()[:-1].casefold()==perkname.casefold()) or (p_match.group()[:-1].casefold().replace(" ","")==perkname.casefold()):
+                        embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[i][typus][p_match.end():],colour=typus_colour[typus])
+                        embed.set_footer(text=f"{typus_name[typus]}")
+                        try:
+                            await client.say(embed=embed)
+                        except discord.HTTPException:
+                            await client.say(perksfeed[i][typus])
+        return
+    out=random.randint(1,len(perksfeed)-3)
+    while perksfeed[out][typus]=="":
+        out=random.randint(1,len(perksfeed)-3)
+    
+    p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
+    p_match=p_pattern.search(perksfeed[out][typus])
+    
+    #dealing with banned perks
+    bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard","finemmane"]
+    while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
+        print("banned perk rolled")
+        out=random.randint(1,len(perksfeed)-3)
+        while perksfeed[out][typus]=="":
+            out=random.randint(1,len(perksfeed)-3)
+        p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
+        p_match=p_pattern.search(perksfeed[out][typus])
+    #print(perksfeed[out][typus])
+    embed = discord.Embed(title=p_match.group()[:-1],description=perksfeed[out][typus][p_match.end():],colour=typus_colour[typus])
+    embed.set_footer(text=f"{typus_name[typus]}")
+    try: #sadly there are some perks that are too long for the embed field.
+        await client.say(embed=embed)
+    except discord.HTTPException:
+        await client.say(perksfeed[out][typus])
+    
+
+@client.command(pass_context=True, description="Roll augments. *>aug tinker*, or look up augs with *>aug tinker world*. You can see the short interpretation of the tarot card with *>aug world*",aliases=["aug","Aug"])
+async def augment(ctx, classification=None, card=None):
+    global augfeed
+    if classification==None:
+        await client.say("Need to know the classification. Blaster, Breaker, etc.")
+        return
+    augcolour=discord.Colour(0xBF9000)
+    classifications=["blaster","breaker","brute","changer","master","mover","shaker","stranger","striker","tinker","thinker","trump"]
+    cards=["fool","magi","nun","lady","lord","pope","lovers","chariot","strength","hermit","wheel","justice","hanged","death","temperance","devil","tower","star","moon","sun","judgement","world"]
+    if classification in cards:
+        await client.say(augfeed[cards.index(classification)+1][1])
+        return
+    augindex=classifications.index(classification.casefold())+2
+    if card==None:
+        out=random.randint(1,len(augfeed)-1)
+        if augfeed[out][augindex]!="":
+            embed = discord.Embed(title=f"{classification.title()} Augment",description=augfeed[out][augindex],colour=augcolour)
+            await client.say(embed=embed)
+            #await client.say(augfeed[out][augindex])
+        else:
+            embed = discord.Embed(title=f"{classification.title()} Augment - General",description=f"**{augfeed[out][0].title()}**: {augfeed[out][1]}",colour=augcolour)
+            await client.say(embed=embed)
+            #await client.say(f"**{augfeed[out][0].title()}**: {augfeed[out][1]}")
+    else:
+        augs=[i[augindex] for i in augfeed]
+        p_pattern=re.compile("\w*\.")
+        for i in range(0,len(augs)):
+            p_match=p_pattern.search(augs[i])
+            if p_match:
+                if p_match.group()[:-1].casefold()==card.casefold(): 
+                    await client.say(embed=discord.Embed(title=f"{classification.title()} Augment",description=augs[i],colour=augcolour))
+                    return
+                    #await client.say(augs[i])
+        await client.say(f"No {card.title()} augment defined.")
+
+@client.command(pass_context=True, description="Trigger warning.",aliases=["Trigger"])
+async def trigger(ctx, id=None):
+    global triggerfeed
+    if id==None:
+        out=random.randint(0,len(triggerfeed))
+        while triggerfeed[out][0]=="":
+            out=random.randint(0,len(triggerfeed))
+        await client.say(f"Trigger #{out+1}: {triggerfeed[out][0]}")
+    else:
+        id=int(id)
+        await client.say(f"Trigger #{id} by {triggerfeed[id-1][1]}: {triggerfeed[id-1][0]}")
+
+
+@client.command(pass_context=True, description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
-    gid="#gid="
-    maps={"Street with Cars":"0","Street With Cars 2":"886269561","Street With Verticality":"3865936","Railroad":"1143411491",
-          "Gas Station":"2036938228","Park":"949935105"}
-    if ctx.invoked_with=="rmap":
-        choice=random.choice(list(maps.keys()))
-        c_map=maps[choice]
-        await client.say("**{0}:**\n{1}{2}{3}".format(choice,playmap,gid,c_map))
-    elif ctx.message.server.id=="465651565089259521":
+    if ctx.message.server.id=="465651565089259521":
         await client.say(playmap_gh)
     else:
         await client.say(playmap)
@@ -408,19 +578,23 @@ async def lysa(*args):
 async def wiki(*args):
     await client.say("https://vanwiki.org/start")
 
-@client.command(description="Link a cape's vanwiki article.")
-async def cape(*cape):
+@client.command(pass_context=True,description="Link a cape's vanwiki article.")
+async def cape(ctx,*cape):
     cape=str(cape).replace(" ", "_")
     cape="".join(cape)
     cape=re.sub('\'|\,|\(|\)', '',cape)
-    domain="https://vanwiki.org/ic/cape/"+cape
+    loc=ctx.message.server.id
+    server=await sid(loc)
+    if loc=="undefined":
+        await client.add_reaction(ctx.message,"❌")
+    domain=f"https://vanwiki.org/{server}/cape/{cape}"
     async with aiohttp.get(domain, allow_redirects=False) as r:
         #print(r.text)
         status="Status"
         if status in await r.text():
-            await client.say("https://vanwiki.org/ic/cape/"+cape)
+            await client.say(domain)
         else:
-            await client.say("No such article. Create it at https://vanwiki.org/ic/cape/"+cape)
+            await client.say("No such article. Create it at "+domain)
 
 
 @client.command(pass_context=True,description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
@@ -439,12 +613,12 @@ async def stopspam(ctx, i:int):
         return
     try:
         await client.purge_from(ctx.message.channel,limit=i,check=is_me)
-    except discord.Forbidden():
+    except discord.Forbidden:
         await client.say("Insufficient priviliges.")
 
-
+#TODO: fix id
 @client.command(pass_context=True,description="Fuck you.",hidden=True)
-async def mute(ctx,usr): #todo:fix id
+async def mute(ctx,usr): 
     if ctx.message.author.id not in owner:
         await client.say("This would be a fun game. But you already lost.")
         return
@@ -519,7 +693,8 @@ async def _time(ctx,):
     
     await client.say(embed=embed)
 
-@client.command(pass_context=True, description="Gives (or removes) the Active role for use in faction actions.")
+#TODO: Better QoL, list options, better configuration
+@client.command(pass_context=True, description="Gives (or removes) self-serve roles.")
 async def toggle(ctx, req_role="Active"):
     bye_emoji = discord.utils.get(client.get_all_emojis(), name='byedog')
     user = ctx.message.author
@@ -601,12 +776,11 @@ async def toggle(ctx, req_role="Active"):
             
            
     
-
+#Rolls wounds off of the Weaverdice wound table.
 @client.command(pass_context=True,aliases=["Bash","Pierce","Cut","Freeze","Shock","Rend","Burn","bash","pierce","cut","freeze","shock","rend","burn","Wound","Poison","poison"],
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
                  " Use >wound 'Hit Vitals' to find specfic wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
-    start=time.perf_counter()
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
@@ -699,14 +873,12 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
              embed = discord.Embed(title=typus["title"],colour=discord.Colour(typ_colours[typ]))
         else:
             embed = discord.Embed(colour=discord.Colour(typ_colours[typ]))
-        end=time.perf_counter()
-        ms=f"{end-start}ms"
         if "tag" in typus:
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {typus['tag']}",icon_url=ctx.message.author.avatar_url)
         else:
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {severity} {aim.casefold()} {repeatlist[j]}",icon_url=ctx.message.author.avatar_url)
         damages=[]
-        for x in range(0,repeatlist[j]):
+        for _ in range(0,repeatlist[j]):
              luck=random.randint(0,len(typlist)-1)
              damages.append(typlist[luck])
              embed.add_field(name=typlist[luck][3], value=f"{typlist[luck][4]}\n*Location: {typlist[luck][2]}, Stage: {typlist[luck][1]}*", inline=False)
@@ -719,7 +891,8 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     return True
 
 
-
+#dice rolling.
+#TODO: Add memorized rolls, roll series, independent dice
 @client.command(pass_context=True,description="See >tag roll for help",aliases=["r","R"])
 async def roll(ctx,formula="3d20+4",*comment):
     formula_in=formula
@@ -902,6 +1075,7 @@ async def roll(ctx,formula="3d20+4",*comment):
 
 tag_muted=False #global
 
+#tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes.
 @client.command(pass_context=True,description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","Effect","Tag"])
 @commands.check(no_pm)
 async def tag(ctx, tag=None, content1=None, *,content2=None):
@@ -962,6 +1136,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             if not (await ctx.invoke(wound,severity=str(tag))):
                 await client.add_reaction(ctx.message,"❌")
 
+#Can use this to stop tag abuse
 @client.command(pass_context=True,hidden=True)
 async def tagToggle(ctx):
     global tag_muted
@@ -977,6 +1152,7 @@ async def tagToggle(ctx):
     else:
         await client.say("Beep Boop. Error.")
 
+#convert from inches to cm. Very, very basic. 
 @client.command(pass_context=True,aliases=["conv"],description="Fuck the Imperial System.")
 async def convert(ctx, inches):
     ft_symbol="'"
@@ -989,7 +1165,8 @@ async def convert(ctx, inches):
         inch=int(inches)
     await client.say(f"{inches} is equal to {inch*2.54}cm")
 
-#GLICKO MODulE
+#TODO: Replace with trueSkill
+#GLICKO MODUlE
 #defining parameters for the glicko system
 scale=173.7178
 tau=0.3
@@ -1459,7 +1636,7 @@ async def rank_decay():
             await asyncio.sleep(60*60*3) # task runs every 3 hours      
         
 
-###Runs here
+###Bot runs here
 with open("Token.txt", 'r') as f:
         token=f.read()
 client.run(token)
