@@ -400,7 +400,7 @@ async def worm(*args):
 	
 @client.command(name="lysa",description="Repeats famous catchphrases.", aliases=["Lysa"])
 async def lysa(*args):
-	phraselist = ["oof", "Uuh", "uuh", "Wew", "wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", ":sweat~1: "]
+	phraselist = ["oof", "Uuh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", ":sweat~1:", "listen\nit's fine"]
 	
 	await client.say(random.choice(phraselist))
 
