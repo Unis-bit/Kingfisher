@@ -1441,7 +1441,7 @@ async def show(ctx, cape=None):
 @account.command(pass_context=True,description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.")
 async def make(ctx,cape=None,amount=0,income=0):
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861"):
+    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
         await client.say("BoK only operates in #faction-actions!")
         return
     if cape==None:
@@ -1472,7 +1472,7 @@ async def make(ctx,cape=None,amount=0,income=0):
 @account.command(aliases=["u"],pass_context=True,description="Keep track of expenses and gains with this.")
 async def update(ctx,cape, amount):
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861"):
+    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
         await client.say("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1495,7 +1495,7 @@ async def update(ctx,cape, amount):
 @account.command(aliases=["s"],pass_context=True,description="Send money to another account.")
 async def send(ctx,cape,target, amount):        
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861"):
+    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
         await client.say("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1525,7 +1525,7 @@ async def send(ctx,cape,target, amount):
 @account.command(aliases=["i"],pass_context=True,description="Adjust your periodic income here. Use the weekly amount.")
 async def income(ctx,cape, amount):
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861"):
+    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
         await client.say("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
