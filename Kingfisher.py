@@ -572,11 +572,12 @@ async def claim(ctx,faction = None,square:int = None):
 async def worm(*args):
     await client.say("Take that, you 🐛")
 	
-@client.command(name="lysa",description="Repeats famous catchphrases.", aliases=["Lysa"])
-async def lysa(*args):
-	phraselist = ["oof", "Uuh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", ":sweat~1:", "listen\nit's fine"]
+@client.command(pass_context=True,description="Repeats famous catchphrases.", aliases=["Lysa"])
+async def lysa(ctx):
+    sweat_emoji = discord.utils.get(client.get_all_emojis(), name='sweats')
+    phraselist = ["oof", "Uuh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
 	
-	await client.say(random.choice(phraselist))
+    await client.say(random.choice(phraselist))
 
 @client.command(description="Forgot a simple URL? I got you.")
 async def wiki(*args):
