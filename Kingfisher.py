@@ -579,6 +579,50 @@ async def lysa(ctx):
 	
     await client.say(random.choice(phraselist))
 
+
+# unsure if right 
+# '>eve' command variables inits 
+max1 = 6
+max2 = 5
+f1 = []
+f2 = []
+Eve_v = "v0.5 Eve"
+#	
+@client.command(pass_context=True, description="Everyone's personal rolls" name="eve")
+async def eve(ctx, arg = 0):
+    global f1
+    global f2
+    var = ""
+    if args == 1:
+        f1 = []
+        for j in range(6):
+            f1.append(random.randint(1, max1))
+        f1.sort()
+        var ="1"
+    elif args == 2:
+        f2 = []
+        for k in range(6):
+            f2.append(random.randint(1, max2))
+        f2.sort()
+        var ="2"	
+    elif args == 0:
+        f1 = []
+        f2 = []
+        for j in range(6):
+            f1.append(random.randint(1, max1))
+        f1.sort()
+        for k in range(6):
+            f2.append(random.randint(1, max2))
+        f2.sort()
+        var ="r"
+    elif args == 3:
+        var ="s"
+    
+    print "_______"+ var +"_______"
+	await client.say( "|",f1[0], f1[1], " | ", f2[0] ,f2[1],"|")
+	await client.say( "|",f1[2], f1[3], " | ", f2[2] ,f2[3],"|")
+	await client.say( "|",f1[4], f1[5], " | ", f2[4] ,f2[5],"|")
+
 @client.command(description="Forgot a simple URL? I got you.")
 async def wiki(*args):
     await client.say("https://vanwiki.org/start")
