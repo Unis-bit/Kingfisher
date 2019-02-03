@@ -571,6 +571,12 @@ async def claim(ctx,faction = None,square:int = None):
 @client.command(description="Bullying.",hidden=True)
 async def worm(*args):
     await client.say("Take that, you 🐛")
+	
+@client.command(name="lysa",description="Repeats famous catchphrases.", aliases=["Lysa"])
+async def lysa(*args):
+	phraselist = ["oof", "Uuh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", ":sweat~1:", "listen\nit's fine"]
+	
+	await client.say(random.choice(phraselist))
 
 @client.command(description="Forgot a simple URL? I got you.")
 async def wiki(*args):
