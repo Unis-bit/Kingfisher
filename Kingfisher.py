@@ -582,46 +582,43 @@ async def lysa(ctx):
 
 # unsure if right 
 # '>eve' command variables inits 
-max1 = 6
-max2 = 5
-f1 = []
-f2 = []
+eve_max1 = 6
+eve_max2 = 5
+eve_f1 = []
+eve_f2 = []
 Eve_v = "v0.5 Eve"
-#	
-@client.command(pass_context=True, description="Everyone's personal rolls" name="eve")
-async def eve(ctx, arg = 0):
-    global f1
-    global f2
+# Rolls 6d5 and 6d6 in two columns	
+@client.command(pass_context=True, description="Everyone's personal rolls",hidden=True)
+async def eve(ctx, args = 0):
+    global eve_f1
+    global eve_f2
     var = ""
     if args == 1:
-        f1 = []
+        eve_f1 = []
         for j in range(6):
-            f1.append(random.randint(1, max1))
-        f1.sort()
+            eve_f1.append(random.randint(1, eve_max1))
+        eve_f1.sort()
         var ="1"
     elif args == 2:
-        f2 = []
+        eve_f2 = []
         for k in range(6):
-            f2.append(random.randint(1, max2))
-        f2.sort()
+            eve_f2.append(random.randint(1, eve_max2))
+        eve_f2.sort()
         var ="2"	
     elif args == 0:
-        f1 = []
-        f2 = []
+        eve_f1 = []
+        eve_f2 = []
         for j in range(6):
-            f1.append(random.randint(1, max1))
-        f1.sort()
+            eve_f1.append(random.randint(1, eve_max1))
+        eve_f1.sort()
         for k in range(6):
-            f2.append(random.randint(1, max2))
-        f2.sort()
+            eve_f2.append(random.randint(1, eve_max2))
+        eve_f2.sort()
         var ="r"
     elif args == 3:
         var ="s"
     
-    print "_______"+ var +"_______"
-	await client.say( "|",f1[0], f1[1], " | ", f2[0] ,f2[1],"|")
-	await client.say( "|",f1[2], f1[3], " | ", f2[2] ,f2[3],"|")
-	await client.say( "|",f1[4], f1[5], " | ", f2[4] ,f2[5],"|")
+    await client.say( f"**{var}**\n|{eve_f1[0]} {eve_f1[1]} |  {eve_f2[0]} {eve_f2[1]}|\n|{eve_f1[2]} {eve_f1[3]} |  {eve_f2[2]} {eve_f2[3]}|\n|{eve_f1[4]} {eve_f1[5]} |  {eve_f2[4]} {eve_f2[5]}|")
 
 @client.command(description="Forgot a simple URL? I got you.")
 async def wiki(*args):
