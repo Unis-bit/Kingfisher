@@ -289,7 +289,7 @@ async def remind(ctx,time,*message):
 @client.command(pass_context=True, description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
     if ctx.message.author.id not in owner:
-        await client.say("No. Fuck off.")
+        await client.say("No. Fuck off.") 
         return
     global b_task
     global b_task2
@@ -545,7 +545,8 @@ async def claim(ctx,faction = None,square:int = None):
     else:
         sid="test"
     if (ctx.message.channel.id != "358409511838547979") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "478240151987027978"):
-        await client.send_message(discord.User(id=owner[0]),f"Claiming in {ctx.message.channel}: {ctx.message.author.name}")
+        #await client.send_message(discord.User(id=owner[0]),f"Claiming in {ctx.message.channel}: {ctx.message.author.name}")
+        await client.send_message(f"Can only claim in #faction-actions!")
         return
     cacher=random.randint(1, 100000000000)
     if faction=="factions":
@@ -575,7 +576,7 @@ async def worm(*args):
 @client.command(pass_context=True,description="Repeats famous catchphrases.", aliases=["Lysa"])
 async def lysa(ctx):
     sweat_emoji = discord.utils.get(client.get_all_emojis(), name='sweats')
-    phraselist = ["oof", "Uuh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
+    phraselist = ["oof", "Uh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
 	
     await client.say(random.choice(phraselist))
 
@@ -595,23 +596,23 @@ async def eve(ctx, args = 0):
     var = ""
     if args == 1:
         eve_f1 = []
-        for j in range(6):
+        for _ in range(6):
             eve_f1.append(random.randint(1, eve_max1))
         eve_f1.sort()
         var ="1"
     elif args == 2:
         eve_f2 = []
-        for k in range(6):
+        for _ in range(6):
             eve_f2.append(random.randint(1, eve_max2))
         eve_f2.sort()
         var ="2"	
     elif args == 0:
         eve_f1 = []
         eve_f2 = []
-        for j in range(6):
+        for _ in range(6):
             eve_f1.append(random.randint(1, eve_max1))
         eve_f1.sort()
-        for k in range(6):
+        for _ in range(6):
             eve_f2.append(random.randint(1, eve_max2))
         eve_f2.sort()
         var ="r"
