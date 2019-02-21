@@ -319,22 +319,15 @@ async def die(ctx):
     b_task2.cancel()
     schedstop.set()
     reminders=[]
-    if sPlanner.empty()==False:
-        with open(f"reminders.txt",mode="r+") as f:
-            f.seek(0)
-            f.truncate()
-            queue=sPlanner.queue
-            for i in queue:
-                print(i)
-                print(i[0])
-                print(i.argument)
-                print(i.argument[0])
-                print(i.argument[0].gi_frame.f_locals['content'])
-                print(i.argument[0].gi_frame.f_locals['destination'].id)
-                print(type(i))
-                reminders.append({"time":i[0],'content':i.argument[0].gi_frame.f_locals['content'],'destination':i.argument[0].gi_frame.f_locals['destination'].id})
-            json.dump(reminders,f)
-    print(reminders)
+    #if sPlanner.empty()==False:
+    with open(f"reminders.txt",mode="r+") as f:
+        f.seek(0)
+        f.truncate()
+        queue=sPlanner.queue
+        for i in queue:
+            reminders.append({"time":i[0],'content':i.argument[0].gi_frame.f_locals['content'],'destination':i.argument[0].gi_frame.f_locals['destination'].id})
+        json.dump(reminders,f)
+    #print(reminders)
     await client.close()
 
 #TODO: fix    
