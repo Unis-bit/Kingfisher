@@ -1122,7 +1122,7 @@ async def roll(ctx,formula="3d20+4",*comment):
 
 tag_muted=False #global
 
-#tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes.
+#tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes. So many memes.
 @client.command(pass_context=True,description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","Effect","Tag"])
 @commands.check(no_pm)
 async def tag(ctx, tag=None, content1=None, *,content2=None):
@@ -1132,7 +1132,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
     elif tag.casefold()=="create".casefold():
         global tag_muted
         if tag_muted==True:
-            await client.say("Disabled until you retards calm down.")
+            await client.say("Disabled until you fuckers calm down.")
             return
         elif (content1==None) or (content2==None):
             await client.say("Need a name and content for the tag.")
@@ -1153,6 +1153,21 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
     elif tag_muted==False:
         if tag.casefold()=="list":
             await client.say("List of all current tags: https://docs.google.com/spreadsheets/d/e/2PACX-1vRjroKacZBQrkIEayrhHuFtA_5mAL_C48Y-4taCjZ5k0mNXAPTi5diZAiZ-7l-Uai5xvbNomF_s1-0m/pubhtml")
+        elif tag.casefold()=="owner":
+            gc = gspread.authorize(credentials)
+            RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
+            tagsSheet = RefSheet.worksheet("Tags")
+            target_tag=tagsSheet.find(content1.casefold())
+            ownerID=tagsSheet.cell(target_tag.row,target_tag.col+2).value
+            print(ownerID)
+            print(type(ownerID))
+            print(client.get_all_members())
+            tagowner=discord.utils.get(client.get_all_members(), id=str(ownerID))
+            if tagowner is None:
+                await client.say(f"{content1} is owned by an unknown user.")
+                return
+            await client.say(f"{content1} is owned by {tagowner.name}.")
+            return
         elif tag.casefold()=="delete":
             gc = gspread.authorize(credentials)
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
