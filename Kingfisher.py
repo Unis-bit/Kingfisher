@@ -10,7 +10,9 @@ import os
 import platform
 import random
 import re
+import sched
 import time
+import threading
 import traceback
 
 import aiohttp
@@ -39,7 +41,9 @@ gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(26
 typ_colours={"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403}
 muted_usr=[]
 
-asyncio.set_event_loop(asyncio.new_event_loop())
+
+clientloop=asyncio.new_event_loop()
+asyncio.set_event_loop(clientloop)
 owner = ["138340069311381505"] #hyper#4131
 
 logging.basicConfig(level=logging.INFO)
@@ -77,6 +81,7 @@ triggerfeed = triggerSheet.get_all_values()
 VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
+sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefunc=time.monotonic, delayfunc=time.sleep)
 
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
@@ -99,6 +104,18 @@ async def on_ready():
     global b_task2
     b_task=client.loop.create_task(account_decay())
     b_task2=client.loop.create_task(rank_decay())
+    
+    #resume scheduled reminders
+    loop = asyncio.get_event_loop()
+    with open(f"reminders.txt",mode="r+") as f:
+        reminders = json.load(f)
+        for i in reminders:
+            timer=i['time']
+            #print(time.time()-i['time'])
+            content=i['content']
+            destination=client.get_channel(i['destination'])
+            sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(client.send_message(destination,content),loop,), kwargs={})
+    #end resume
     return 
 
 
@@ -262,9 +279,10 @@ async def nest(ctx):
     await client.say("https://discord.gg/gxQVAbA")
 
 #TODO: Conserve over restarts
-#TODO: ping all people who reacted the the reminder     
+#TODO: ping all people who reacted the the reminder  
 @client.command(pass_context=True, description="Reminds you of shit. Time should be specified as 13s37m42h12d leaving away time steps as desired.", aliases=["rem"])
 async def remind(ctx,time,*message):
+    loop = asyncio.get_event_loop()
     timer=0
     chunk=re.compile("\d+[shmd]*")
     chunks=chunk.findall(time)
@@ -283,8 +301,12 @@ async def remind(ctx,time,*message):
             time=int(i[:-1])*60*60*24
             timer=timer+time
     await client.add_reaction(ctx.message,'\N{Timer Clock}')
-    await asyncio.sleep(timer)
-    await client.say(f"{ctx.message.author.mention}: {' '.join(message)}")
+    content=f"{ctx.message.author.mention}: {' '.join(message)}"
+    #coro=client.send_message(ctx.message.channel,content)
+    sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(client.send_message(ctx.message.channel,content),loop,), kwargs={})
+    print(sPlanner.queue)
+
+
 
 @client.command(pass_context=True, description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
@@ -295,6 +317,24 @@ async def die(ctx):
     global b_task2
     b_task.cancel()
     b_task2.cancel()
+    schedstop.set()
+    reminders=[]
+    if sPlanner.empty()==False:
+        with open(f"reminders.txt",mode="r+") as f:
+            f.seek(0)
+            f.truncate()
+            queue=sPlanner.queue
+            for i in queue:
+                print(i)
+                print(i[0])
+                print(i.argument)
+                print(i.argument[0])
+                print(i.argument[0].gi_frame.f_locals['content'])
+                print(i.argument[0].gi_frame.f_locals['destination'].id)
+                print(type(i))
+                reminders.append({"time":i[0],'content':i.argument[0].gi_frame.f_locals['content'],'destination':i.argument[0].gi_frame.f_locals['destination'].id})
+            json.dump(reminders,f)
+    print(reminders)
     await client.close()
 
 #TODO: fix    
@@ -659,7 +699,7 @@ async def stopspam(ctx, i:int):
         await client.say("Need something deleted? <@&310528314412630027>.")
         return
     try:
-        await client.purge_from(ctx.message.channel,limit=i,check=is_me)
+        await client.purge_from(ctx.message.channel,limit=i)
     except discord.Forbidden:
         await client.say("Insufficient priviliges.")
 
@@ -1703,6 +1743,13 @@ async def rank_decay():
         
 
 ###Bot runs here
+schedstop = threading.Event()
+def timer():
+    while not schedstop.is_set():
+        sPlanner.run(blocking=False)
+        time.sleep(1)
+schedthread = threading.Thread(target=timer)
+schedthread.start()
 with open("Token.txt", 'r') as f:
         token=f.read()
 client.run(token)
