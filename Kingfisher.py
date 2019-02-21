@@ -41,7 +41,7 @@ areas = [(57,98 ),(157,106 ),(229,105),(322,103),(416,103),(526,63),(604,46),(69
 (724,383 ),(736,483 ),(757,453 ),(818,439 ),(882,415 ),(500,622 ),(595,592 ),(674,570 ),(718,540 ),(795,484 ),(843,464 ),(431,706 ),(510,682 ),(567,648 ),(444,780)]
 
 #gh stuff
-gh_factions={"zenith":(222,21,228),"fixers":ImageColor.getrgb("#6584ff"),"demons":ImageColor.getrgb("#ff7a00"),"plastics":ImageColor.getrgb("#fd0000"),"avalon":(173, 20, 87),
+gh_factions={"zenith":(222,21,228),"fixers":ImageColor.getrgb("#6584ff"),"demons":ImageColor.getrgb("#ff7a00"),"plastics":ImageColor.getrgb("#ff69b4"),"avalon":(173, 20, 87),
 "children":(155, 89, 182),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),"deplorables":(241, 196, 15),
