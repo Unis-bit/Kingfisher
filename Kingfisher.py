@@ -674,7 +674,7 @@ async def eve(ctx, args = 0):
     elif args == 3:
         var ="s"
     
-    await client.say( f"**{var}**\n|{eve_f1[0]} {eve_f1[1]} |  {eve_f2[0]} {eve_f2[1]}|\n|{eve_f1[2]} {eve_f1[3]} |  {eve_f2[2]} {eve_f2[3]}|\n|{eve_f1[4]} {eve_f1[5]} |  {eve_f2[4]} {eve_f2[5]}|")
+    await client.say( f"-----**{var}**-----\n|{eve_f1[0]} {eve_f1[1]} |  {eve_f2[0]} {eve_f2[1]}|\n|{eve_f1[2]} {eve_f1[3]} |  {eve_f2[2]} {eve_f2[3]}|\n|{eve_f1[4]} {eve_f1[5]} |  {eve_f2[4]} {eve_f2[5]}|")
 
 @client.command(description="Forgot a simple URL? I got you.")
 async def wiki(*args):
