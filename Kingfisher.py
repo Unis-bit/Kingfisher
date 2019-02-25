@@ -928,7 +928,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     elif loc=="detroit":
         f=1 #detroit uses skitterdice
     elif loc=="la":
-        f=0 #todo: add the original wd, switch this to 2
+        f=2 #todo: add the original wd, switch this to 2
     elif loc=="test":
         f=2 
     else:
