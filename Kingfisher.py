@@ -83,10 +83,15 @@ scope = ['https://spreadsheets.google.com/feeds',
 credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
 gc = gspread.authorize(credentials)
 
+feed=[[],[],[]]
 #kingfisher reference doc
 RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
 sheet = RefSheet.worksheet("Wounds")
-feed = sheet.get_all_values()
+feed[0] = sheet.get_all_values()
+sheet_SD=RefSheet.worksheet("Wounds_SD")
+feed[1] = sheet_SD.get_all_values()
+sheet_WD=RefSheet.worksheet("Wounds_WD")
+feed[2] = sheet_WD.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
 perksSheet = RefSheet.worksheet("Perks")
@@ -190,6 +195,8 @@ async def sid(loc):
         sid="segovia"
     elif loc=="434729592352276480":
         sid="test"
+    elif loc=="457290411698814980":
+        sid="la"
     else:
         sid="undefined"
     return sid
@@ -408,7 +415,11 @@ async def updateFeed(ctx):
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
     sheet = RefSheet.worksheet("Wounds")
-    feed = sheet.get_all_values()
+    feed[0] = sheet.get_all_values()
+    sheet_SD=RefSheet.worksheet("Wounds_SD")
+    feed[1] = sheet_SD.get_all_values()
+    sheet_WD=RefSheet.worksheet("Wounds_WD")
+    feed[2] = sheet_WD.get_all_values()
     tagsSheet = RefSheet.worksheet("Tags")
     tags = tagsSheet.get_all_values()
     VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
@@ -910,6 +921,18 @@ async def toggle(ctx, req_role="Active"):
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
                  " Use >wound 'Hit Vitals' to find specfic wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
+    loc=await sid(ctx.message.server.id)
+    #0 is wd20, 1 is skitterdice, 2 is original wd
+    if loc=="gh":
+        f=0
+    elif loc=="detroit":
+        f=1 #detroit uses skitterdice
+    elif loc=="la":
+        f=0 #todo: add the original wd, switch this to 2
+    elif loc=="test":
+        f=2 
+    else:
+        f=0 #default is wd20
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
@@ -939,7 +962,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     if "typus" in typus: #kwarg
         typ=typus['typus']
     elif (ctx.invoked_with.casefold() == "Wound".casefold()) or (ctx.invoked_with.casefold() == "tag".casefold()):
-        for i in feed:
+        for i in feed[f]:
             if i[3].casefold()==severity.casefold(): #severity is actually the wound we're looking for here
                 await client.say(f"**{i[3]}**: {i[4]} *({i[0]}, {i[1]}, {i[2]})*")
                 return True
@@ -986,7 +1009,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
             elif aimt.casefold()=="l":
                 aimt="Legs"
         typlist=[]
-        for i in feed:
+        for i in feed[f]:
             if i[0].casefold()==typ.casefold():
                 if i[1].casefold()==severity.casefold():
                     if exclusive==True:
@@ -1069,7 +1092,6 @@ async def update(ctx,title,*formulas):
 async def show(ctx,title=None,user=None):
     user=ctx.message.author.id
     macro_list=[]
-    print(macros)
     for i in macros[user]:
         macro_list.append(f"Title: {i}, Formulas: {' '.join(macros[user][i])}\n")
     await client.say(f"Saved macros for {ctx.message.author.name} are:\n{''.join(macro_list)}")
