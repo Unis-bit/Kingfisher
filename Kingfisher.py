@@ -25,7 +25,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
 
-version="0.09a Reminders rework"
+version="0.1 Roll macros"
 ###useful resources
 #for colours
 #www.htmlcsscolor.com/hex
@@ -83,10 +83,15 @@ scope = ['https://spreadsheets.google.com/feeds',
 credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
 gc = gspread.authorize(credentials)
 
+feed=[[],[],[]]
 #kingfisher reference doc
 RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
 sheet = RefSheet.worksheet("Wounds")
-feed = sheet.get_all_values()
+feed[0] = sheet.get_all_values()
+sheet_SD=RefSheet.worksheet("Wounds_SD")
+feed[1] = sheet_SD.get_all_values()
+sheet_WD=RefSheet.worksheet("Wounds_WD")
+feed[2] = sheet_WD.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
 perksSheet = RefSheet.worksheet("Perks")
@@ -102,6 +107,8 @@ sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
 sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefunc=time.monotonic, delayfunc=time.sleep)
 
+#global variables
+macros={}
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
 client = Bot(description=f"Thinkerbot version {version}", command_prefix=">", pm_help = False, case_insensitive=True)
@@ -135,6 +142,11 @@ async def on_ready():
             destination=client.get_channel(i['destination'])
             sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(client.send_message(destination,content),loop,), kwargs={})
     #end resume
+    
+    #roll macros
+    global macros
+    with open(f"roll_macros.txt",mode="r") as f:
+        macros = json.load(f)
     return 
 
 
@@ -183,6 +195,8 @@ async def sid(loc):
         sid="segovia"
     elif loc=="434729592352276480":
         sid="test"
+    elif loc=="457290411698814980":
+        sid="la"
     else:
         sid="undefined"
     return sid
@@ -336,10 +350,11 @@ async def die(ctx):
     global b_task2
     b_task.cancel()
     b_task2.cancel()
+    
     schedstop.set()
     reminders=[]
     #if sPlanner.empty()==False:
-    with open(f"reminders.txt",mode="r+") as f:
+    with open(f"reminders.txt",mode="w+") as f:
         f.seek(0)
         f.truncate()
         queue=sPlanner.queue
@@ -347,6 +362,7 @@ async def die(ctx):
             reminders.append({"time":i[0],'content':i.argument[0].gi_frame.f_locals['content'],'destination':i.argument[0].gi_frame.f_locals['destination'].id})
         json.dump(reminders,f)
     #print(reminders)
+
     await client.close()
 
 #TODO: fix    
@@ -399,7 +415,11 @@ async def updateFeed(ctx):
     gc = gspread.authorize(credentials)
     RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
     sheet = RefSheet.worksheet("Wounds")
-    feed = sheet.get_all_values()
+    feed[0] = sheet.get_all_values()
+    sheet_SD=RefSheet.worksheet("Wounds_SD")
+    feed[1] = sheet_SD.get_all_values()
+    sheet_WD=RefSheet.worksheet("Wounds_WD")
+    feed[2] = sheet_WD.get_all_values()
     tagsSheet = RefSheet.worksheet("Tags")
     tags = tagsSheet.get_all_values()
     VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
@@ -674,7 +694,7 @@ async def eve(ctx, args = 0):
     elif args == 3:
         var ="s"
     
-    await client.say( f"**{var}**\n|{eve_f1[0]} {eve_f1[1]} |  {eve_f2[0]} {eve_f2[1]}|\n|{eve_f1[2]} {eve_f1[3]} |  {eve_f2[2]} {eve_f2[3]}|\n|{eve_f1[4]} {eve_f1[5]} |  {eve_f2[4]} {eve_f2[5]}|")
+    await client.say( f"-----**{var}**-----\n|{eve_f1[0]} {eve_f1[1]} |  {eve_f2[0]} {eve_f2[1]}|\n|{eve_f1[2]} {eve_f1[3]} |  {eve_f2[2]} {eve_f2[3]}|\n|{eve_f1[4]} {eve_f1[5]} |  {eve_f2[4]} {eve_f2[5]}|")
 
 @client.command(description="Forgot a simple URL? I got you.")
 async def wiki(*args):
@@ -901,6 +921,18 @@ async def toggle(ctx, req_role="Active"):
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
                  " Use >wound 'Hit Vitals' to find specfic wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
+    loc=await sid(ctx.message.server.id)
+    #0 is wd20, 1 is skitterdice, 2 is original wd
+    if loc=="gh":
+        f=0
+    elif loc=="detroit":
+        f=1 #detroit uses skitterdice
+    elif loc=="la":
+        f=2 #todo: add the original wd, switch this to 2
+    elif loc=="test":
+        f=2 
+    else:
+        f=0 #default is wd20
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
@@ -930,7 +962,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     if "typus" in typus: #kwarg
         typ=typus['typus']
     elif (ctx.invoked_with.casefold() == "Wound".casefold()) or (ctx.invoked_with.casefold() == "tag".casefold()):
-        for i in feed:
+        for i in feed[f]:
             if i[3].casefold()==severity.casefold(): #severity is actually the wound we're looking for here
                 await client.say(f"**{i[3]}**: {i[4]} *({i[0]}, {i[1]}, {i[2]})*")
                 return True
@@ -977,7 +1009,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
             elif aimt.casefold()=="l":
                 aimt="Legs"
         typlist=[]
-        for i in feed:
+        for i in feed[f]:
             if i[0].casefold()==typ.casefold():
                 if i[1].casefold()==severity.casefold():
                     if exclusive==True:
@@ -1011,10 +1043,70 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     return True
 
 
+@client.group(pass_context=True,description="Save macros for use with the >roll function. Usage is >macro save $title 3d20+4 3d6x4 - then use >roll $title.",alias="m")
+async def macro(ctx):
+    if ctx.invoked_subcommand is None:
+        await client.say('Available commands: save, delete, update, show.')
+
+@macro.command(pass_context=True)
+async def save(ctx,title,*formulas):
+    global macros
+    if not title[0]=="$":
+        await client.say("First letter of your title HAS to be the $ sign!")
+        return
+    user=ctx.message.author.id
+    if not user in macros:
+        macros[user]={}
+    macros[user][title]=[]
+    for i in formulas:
+        macros[user][title].append(i)
+    with open(f"roll_macros.txt",mode="w+") as f:
+        json.dump(macros,f)
+    await client.say(f"{title} has been saved.")
+    return
+
+@macro.command(pass_context=True)
+async def delete(ctx,title):
+    global macros
+    user=ctx.message.author.id
+    macros[user].pop(title)
+    await client.say(f"{title} has been removed from your macros.")
+    with open(f"roll_macros.txt",mode="w+") as f:
+        json.dump(macros,f)
+    return
+
+@macro.command(pass_context=True)
+async def update(ctx,title,*formulas):
+    global macros
+    user=ctx.message.author.id
+    macros[user].pop(title)
+    macros[user][title]=[]
+    for i in formulas:
+        macros[user][title].append(i)
+    with open(f"roll_macros.txt",mode="w+") as f:
+        json.dump(macros,f)
+    await client.say(f"{title} has been updated.")
+    return
+
+@macro.command(pass_context=True)
+async def show(ctx,title=None,user=None):
+    user=ctx.message.author.id
+    macro_list=[]
+    for i in macros[user]:
+        macro_list.append(f"Title: {i}, Formulas: {' '.join(macros[user][i])}\n")
+    await client.say(f"Saved macros for {ctx.message.author.name} are:\n{''.join(macro_list)}")
+    return
+
 #dice rolling.
-#TODO: Add memorized rolls, roll series, independent dice
+#TODO: independent dice
 @client.command(pass_context=True,description="See >tag roll for help",aliases=["r","R"])
 async def roll(ctx,formula="3d20+4",*comment):
+    if formula[0]=="$":
+        user=ctx.message.author.id
+        if formula in macros[user]:
+            for i in macros[user][formula]:
+                await ctx.invoke(roll,formula=i)
+        return
     formula_in=formula
     #print(comment)
     #print(type(comment))
@@ -1191,7 +1283,6 @@ async def roll(ctx,formula="3d20+4",*comment):
     if comment!="":
         out_roll.append(f" #{' '.join(comment)}")
     await client.say(''.join(out_roll))
-
 
 tag_muted=False #global
 
