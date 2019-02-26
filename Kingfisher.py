@@ -724,13 +724,17 @@ async def cape(ctx,*cape):
     if loc=="undefined":
         await ctx.message.add_reaction("❌")
     domain=f"https://vanwiki.org/{guild}/cape/{cape}"
-    async with aiohttp.get(domain, allow_redirects=False) as r:
-        #print(r.text)
-        status="Status"
-        if status in await r.text():
-            await ctx.send(domain)
-        else:
-            await ctx.send("No such article. Create it at "+domain)
+    #async with aiohttp.get(domain, allow_redirects=False) as r:
+    loop = asyncio.get_event_loop()
+    async with aiohttp.ClientSession(loop=loop) as session:
+        async with session.get(domain) as response:
+            response_text = response.text()
+            #print(r.text)
+            status="Status"
+            if status in response_text:
+                await ctx.send(domain)
+            else:
+                await ctx.send("No such article. Create it at "+domain)
 
 
 @bot.command( description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
@@ -747,7 +751,7 @@ async def stopspam(ctx, i:int):
     if ctx.message.author.id not in owner:
         return
     try:
-        await TextChannel.purge(ctx.message.channel,limit=i)
+        await ctx.message.channel.purge(limit=i)
     except discord.Forbidden:
         await ctx.send("Insufficient priviliges.")
 
@@ -831,7 +835,7 @@ async def _time(ctx,):
 #TODO: Better QoL, list options, better configuration
 @bot.command(  description="Gives (or removes) self-serve roles.")
 async def toggle(ctx, req_role="Active"):
-    bye_emoji = discord.utils.get(bot.emojis(), name='byedog')
+    bye_emoji = discord.utils.get(bot.emojis, name='byedog')
     user = ctx.message.author
     if req_role.casefold()=="Active".casefold():
         role = discord.utils.get(user.guild.roles, name="Active")
@@ -1829,9 +1833,9 @@ async def account_decay():
                                     i[1]=i[1]+round((i[2]/7))
                                     wealth+=i[1]
                                 json.dump(accounts,g)
-                            await bot.send_message(channel,f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            await channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                         else:
-                            bot.bot.send_message(channel,"No accounts on file.")
+                            channel.send_message("No accounts on file.")
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
@@ -1877,9 +1881,9 @@ async def rank_decay():
                                     avg_rank+=i[1]
                                     avg_rd+=i[2]
                                 json.dump(ranks,g)
-                            await bot.send_message(channel,f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
+                            await channel.send_message(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
                         else:
-                            bot.bot.send_message(channel,"No ranks existing!")
+                            channel.send_message("No ranks existing!")
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
