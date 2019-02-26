@@ -26,13 +26,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
 
-version="0.1 Roll macros"
+version="0.2 Rewrite"
 ###useful resources
 #for colours
 #www.htmlcsscolor.com/hex
-
-###CURRENTLY MIGRATING TO REWRITE
-###Status: send_message
 
 
 
