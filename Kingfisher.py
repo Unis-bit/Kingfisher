@@ -339,7 +339,7 @@ async def remind(ctx,time,*message):
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
     #coro=client.send_message(ctx.message.channel,content)
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(client.send_message(ctx.message.channel,content),loop,), kwargs={})
-    print(sPlanner.queue)
+    #print(sPlanner.queue)
 
 
 
