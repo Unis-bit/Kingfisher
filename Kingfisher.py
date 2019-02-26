@@ -373,15 +373,18 @@ async def announce(ctx,*message:str):
     if ctx.message.author.id not in owner:
         return
     servs=client.servers
-    await client.send_message(ctx.message.channel,content=servs)
+    for i in servs:
+        await client.send_message(ctx.message.channel,content=i.name)
     targets=[]
     for i in servs:
         print(i.name)
-        for j in i.channels:
-            if j.name=="general" or j.name=="chat":
-                targets.append(j)
-    print(targets)
+        targets.append(i.default_channel)
+        #for j in i.channels:
+            #if j.name=="general" or j.name=="chat":
+                #targets.append(j)
+        
     for i in targets:
+        print(i.name)
         #await client.send_message(i,content=" ".join(message))
         return
             
@@ -1047,7 +1050,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
 
 
 @client.group(pass_context=True,description="Save macros for use with the >roll function. Usage is >macro save $title 3d20+4 3d6x4 #comment - then use >roll $title.\
-Nb that each word in the comment has to be preceded by the # sign!",alias="m")
+ Nb that each word in the comment has to be preceded by the # sign!",alias="m")
 async def macro(ctx):
     if ctx.invoked_subcommand is None:
         await client.say('Available commands: save, delete, update, show.')
@@ -1068,6 +1071,7 @@ async def save(ctx,title,*formulas):
                 r_formula=macros[user][title].pop()
             except IndexError:
                 await client.say("Need a roll code before any comments!")
+                return
             macros[user][title].append(r_formula+i)
         else:
             macros[user][title].append(i)
