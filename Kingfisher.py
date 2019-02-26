@@ -271,11 +271,6 @@ def is_me(m):
 def mute_user(ctx):
     return ctx.message.author.id not in muted_usr
 
-#local check used in some functions only
-#Makes sure some functions cannot be used in pms
-def no_pm(ctx):
-    return not ctx.message.guild is None
-
 @bot.event
 async def on_member_join(member):
     own = await bot.get_user(owner[0])
@@ -383,9 +378,7 @@ async def announce(ctx,*message:str):
         await ctx.send(i.name)
     targets=[]
     for i in servs:
-        print(i.name)
-        print(i.system_channel)
-        print(i.member_count)
+        print(f"{i.name} {i.system_channel} {i.member_count}")
         targets.append(i.system_channel)
         #for j in i.channels:
             #if j.name=="general" or j.name=="chat":
@@ -1319,7 +1312,7 @@ tag_muted=False #global
 
 #tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes. So many memes.
 @bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect"])
-@commands.check(no_pm)
+@guild_only()
 async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
     if (tag==None) or (tag.casefold()=="empty"):
