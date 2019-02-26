@@ -30,6 +30,10 @@ version="0.1 Roll macros"
 #for colours
 #www.htmlcsscolor.com/hex
 
+###CURRENTLY MIGRATING TO REWRITE
+###Status: send_message
+
+
 
 #keys for the map updating function
 factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60), "authority":(109, 130, 187),"leeches":(137, 90, 0),"eclipse":(0, 126, 133), 
@@ -117,7 +121,7 @@ client = Bot(description=f"Thinkerbot version {version}", command_prefix=">", pm
 # Do not mess with it because the bot can break, if you wish to do so, please consult me or someone trusted.
 @client.event
 async def on_ready():
-    print('Logged in as '+client.user.name+' (ID:'+client.user.id+') | Connected to '+str(len(client.servers))+' servers | Connected to '+str(len(set(client.get_all_members())))+' users')
+    print('Logged in as '+client.user.name+' (ID:'+client.user.id+') | Connected to '+str(len(client.guilds))+' servers | Connected to '+str(len(set(client.get_all_members())))+' users')
     print('--------')
     print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
     print('--------')
@@ -272,11 +276,11 @@ def mute_user(ctx):
 #local check used in some functions only
 #Makes sure some functions cannot be used in pms
 def no_pm(ctx):
-    return not ctx.message.server is None
+    return not ctx.message.guild is None
 
 @client.event
 async def on_member_join(member):
-    await client.send_message(discord.User(id=owner[0]),f"New player joined {member.server.name}: {member.name}")
+    await client.send_message(discord.User(id=owner[0]),f"New player joined {member.guild.name}: {member.name}")
         
 #@client.event
 #async def on_command_error(error,ctx):
@@ -292,7 +296,7 @@ async def order66(ctx):
     await client.say("Extermination in progress...")
     await asyncio.sleep(60*3)
     await client.say("Macht’s gut, und danke für den Fisch.")
-    await client.leave_server(ctx.message.server)
+    await Guild.leave(ctx.message.guild)
 
 @client.command(pass_context=True, description="Deletes all channels.",hidden=True)
 async def order67(ctx):
@@ -301,9 +305,9 @@ async def order67(ctx):
         return
     await client.say("Oh. You're actually serious about this?")
     #TODO: add confirmation
-    chans=ctx.message.server.channels
+    chans=ctx.message.guild.channels
     for i in chans:
-        await client.delete_channel(i)
+        await abc.GuildChannel.delete(i)
 
 @client.command(pass_context=True, description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
 async def nest(ctx):
@@ -331,7 +335,7 @@ async def remind(ctx,time,*message):
         if "d" in i:
             time=int(i[:-1])*60*60*24
             timer=timer+time
-    await client.add_reaction(ctx.message,'\N{Timer Clock}')
+    await message.add_reaction(ctx.message,'\N{Timer Clock}')
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
     #coro=client.send_message(ctx.message.channel,content)
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(client.send_message(ctx.message.channel,content),loop,), kwargs={})
@@ -368,7 +372,7 @@ async def die(ctx):
 async def announce(ctx,*message:str):
     if ctx.message.author.id not in owner:
         return
-    servs=client.servers
+    servs=client.guilds
     for i in servs:
         await client.send_message(ctx.message.channel,content=i.name)
     targets=[]
@@ -433,7 +437,7 @@ async def updateFeed(ctx):
     augfeed = augSheet.get_all_values()
     triggerSheet = RefSheet.worksheet("Triggers")
     triggerfeed = triggerSheet.get_all_values()
-    await client.add_reaction(ctx.message,"\U00002714")
+    await message.add_reaction(ctx.message,"\U00002714")
 
 #fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
 @client.command(pass_context=True, description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.")
@@ -604,14 +608,14 @@ async def trigger(ctx, id=None):
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
-    if ctx.message.server.id==465651565089259521:
+    if ctx.message.guild.id==465651565089259521:
         await client.say(playmap_gh)
     else:
         await client.say(playmap)
 
 @client.command(pass_context=True, description="Use this command to claim squares on the map. Faction name needs to be spelled right. Use >claim to see the current map. Use >claim factions to see available factions")
 async def claim(ctx,faction = None,square:int = None):
-    loc=ctx.message.server.id #283841245975937034 detroit, 465651565089259521 GH
+    loc=ctx.message.guild.id #283841245975937034 detroit, 465651565089259521 GH
     if loc==283841245975937034:
         sid="d"
     elif loc==465651565089259521:
@@ -641,7 +645,7 @@ async def claim(ctx,faction = None,square:int = None):
     try:
         await mapUpdate(faction.casefold(),square,sid)
     except (KeyError,IndexError):
-        await client.add_reaction(ctx.message,"❌")
+        await message.add_reaction(ctx.message,"❌")
         return
     await client.say(f"Map updated. https://vanwiki.org/kingfisher/map_{sid}/map.png?nocaching={cacher}")
     #await client.send_file(ctx.message.channel,'Detroit_map.png')
@@ -652,7 +656,7 @@ async def worm(*args):
 	
 @client.command(pass_context=True,description="Repeats famous catchphrases.", aliases=["Lysa"])
 async def lysa(ctx):
-    sweat_emoji = discord.utils.get(client.get_all_emojis(), name='sweats')
+    sweat_emoji = discord.utils.get(client.emojis(), name='sweats')
     phraselist = ["oof", "Uh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
 	
     await client.say(random.choice(phraselist))
@@ -707,11 +711,11 @@ async def cape(ctx,*cape):
     cape=str(cape).replace(" ", "_")
     cape="".join(cape)
     cape=re.sub('\'|\,|\(|\)', '',cape)
-    loc=ctx.message.server.id
-    server=await sid(loc)
+    loc=ctx.message.guild.id
+    guild=await sid(loc)
     if loc=="undefined":
-        await client.add_reaction(ctx.message,"❌")
-    domain=f"https://vanwiki.org/{server}/cape/{cape}"
+        await message.add_reaction(ctx.message,"❌")
+    domain=f"https://vanwiki.org/{guild}/cape/{cape}"
     async with aiohttp.get(domain, allow_redirects=False) as r:
         #print(r.text)
         status="Status"
@@ -725,9 +729,9 @@ async def cape(ctx,*cape):
 async def avatar(ctx, user):
     if user==None:
         await client.say(">avatar [name]")
-    user=ctx.message.server.get_member_named(user)
+    user=ctx.message.guild.get_member_named(user)
     if user==None:
-        await client.add_reaction(ctx.message,"❌")
+        await message.add_reaction(ctx.message,"❌")
     await client.say(user.avatar_url)
 
 @client.command(pass_context=True,description="No more %vial 5.",hidden=True)
@@ -735,7 +739,7 @@ async def stopspam(ctx, i:int):
     if ctx.message.author.id not in owner:
         return
     try:
-        await client.purge_from(ctx.message.channel,limit=i)
+        await TextChannel.purge(ctx.message.channel,limit=i)
     except discord.Forbidden:
         await client.say("Insufficient priviliges.")
 
@@ -746,7 +750,7 @@ async def mute(ctx,usr):
         await client.say("This would be a fun game. But you already lost.")
         return
     global muted_usr
-    muted_usr.append(ctx.message.server.get_member_named(usr).id)
+    muted_usr.append(ctx.message.guild.get_member_named(usr).id)
     await client.say("I told them. Warned them.")
     print(f"{usr} has been muted.")
 
@@ -756,7 +760,7 @@ async def unmute(ctx,usr):
         await client.say("No Release.")
         return
     global muted_usr
-    muted_usr.remove(ctx.message.server.get_member_named(usr).id)
+    muted_usr.remove(ctx.message.guild.get_member_named(usr).id)
     await client.say("Finally free.")
     print(f"{usr} has been unmuted.")
 
@@ -819,101 +823,101 @@ async def _time(ctx,):
 #TODO: Better QoL, list options, better configuration
 @client.command(pass_context=True, description="Gives (or removes) self-serve roles.")
 async def toggle(ctx, req_role="Active"):
-    bye_emoji = discord.utils.get(client.get_all_emojis(), name='byedog')
+    bye_emoji = discord.utils.get(client.emojis(), name='byedog')
     user = ctx.message.author
     if req_role.casefold()=="Active".casefold():
-        role = discord.utils.get(user.server.roles, name="Active")
+        role = discord.utils.get(user.guild.roles, name="Active")
         if role==None:
             await client.say("No Active role defined.")
         if role in user.roles:
-            await client.remove_roles(user, role)
-            await client.add_reaction(ctx.message,bye_emoji)
+            await member.remove_roles(user, role)
+            await message.add_reaction(ctx.message,bye_emoji)
         else:
-            await client.add_roles(user, role)
+            await member.add_roles(user, role)
             await client.say("Remember, spamming 1v1s is punishable by death.")
     
     elif req_role.casefold()=="Smithy".casefold():
-        role = discord.utils.get(user.server.roles, name="Smithy ⚔️")
+        role = discord.utils.get(user.guild.roles, name="Smithy ⚔️")
         if role==None:
             await client.say("No Smithy role defined.")
         if role in user.roles:
-            await client.remove_roles(user, role)
-            await client.add_reaction(ctx.message,bye_emoji)
+            await member.remove_roles(user, role)
+            await message.add_reaction(ctx.message,bye_emoji)
         else:
-            await client.add_roles(user, role)
+            await member.add_roles(user, role)
             await client.say("Welcome to the Smithy.")
 
     elif req_role.casefold()=="news".casefold():
-        role = discord.utils.get(user.server.roles, name="news")
+        role = discord.utils.get(user.guild.roles, name="news")
         if role==None:
             await client.say("No news role defined.")
         if role in user.roles:
-            await client.remove_roles(user, role)
+            await member.remove_roles(user, role)
             await client.say("Who reads this stuff anyways?")
         else:
-            await client.add_roles(user, role)
+            await member.add_roles(user, role)
             await client.say("All caught up.")
             
     elif req_role.casefold()=="RED".casefold():
-        role = discord.utils.get(user.server.roles, name="RED")
-        opprole= discord.utils.get(user.server.roles, name="BLUE")
+        role = discord.utils.get(user.guild.roles, name="RED")
+        opprole= discord.utils.get(user.guild.roles, name="BLUE")
         if role==None:
             await client.say("No RED role defined.")
         if opprole in user.roles:
             await client.say("Oy! No peeking, you cheeky fuck!")
             return
         if role in user.roles:
-            await client.remove_roles(user, role)
-            await client.add_reaction(ctx.message,bye_emoji)
+            await member.remove_roles(user, role)
+            await message.add_reaction(ctx.message,bye_emoji)
         else:
-            await client.add_roles(user, role)
-            await client.add_reaction(ctx.message,"\U00002666")
+            await member.add_roles(user, role)
+            await message.add_reaction(ctx.message,"\U00002666")
             await client.say("Go Team Red Star!")
             
     elif req_role.casefold()=="BLUE".casefold():
-        role = discord.utils.get(user.server.roles, name="BLUE")
-        opprole= discord.utils.get(user.server.roles, name="RED")
+        role = discord.utils.get(user.guild.roles, name="BLUE")
+        opprole= discord.utils.get(user.guild.roles, name="RED")
         if role==None:
             await client.say("No BLUE role defined.")
         if opprole in user.roles:
             await client.say("Oy! No peeking, you cheeky fuck!")
             return
         if role in user.roles:
-            await client.remove_roles(user, role)
-            await client.add_reaction(ctx.message,bye_emoji)
+            await member.remove_roles(user, role)
+            await message.add_reaction(ctx.message,bye_emoji)
         else:
-            await client.add_roles(user, role)
-            await client.add_reaction(ctx.message,"\U0001f6e1")
+            await member.add_roles(user, role)
+            await message.add_reaction(ctx.message,"\U0001f6e1")
             await client.say("Go Team Blue Shield!")
 
     elif req_role.casefold()=="DEEP".casefold():
-        role = discord.utils.get(user.server.roles, name="BLUE")
-        opprole= discord.utils.get(user.server.roles, name="RED")
+        role = discord.utils.get(user.guild.roles, name="BLUE")
+        opprole= discord.utils.get(user.guild.roles, name="RED")
         if role==None:
             await client.say("No DEEP role defined.")
         if opprole in user.roles:
             await client.say("Oy! No peeking, you cheeky fuck!")
             return
         if role in user.roles:
-            await client.remove_roles(user, role)
-            await client.add_reaction(ctx.message,bye_emoji)
+            await member.remove_roles(user, role)
+            await message.add_reaction(ctx.message,bye_emoji)
         else:
-            await client.add_roles(user, role)
-            await client.add_reaction(ctx.message,"🌃")
+            await member.add_roles(user, role)
+            await message.add_reaction(ctx.message,"🌃")
             await client.say("To boldly go where no man has gone before.")
     
     elif req_role.casefold()=="interlude".casefold():
-        role = discord.utils.get(user.server.roles, name="Interlude")
+        role = discord.utils.get(user.guild.roles, name="Interlude")
         if role==None:
             await client.say("No Interlude role defined.")
         if role in user.roles:
-            await client.remove_roles(user, role)
-            await client.add_reaction(ctx.message,bye_emoji)
+            await member.remove_roles(user, role)
+            await message.add_reaction(ctx.message,bye_emoji)
         else:
-            await client.add_roles(user, role)
+            await member.add_roles(user, role)
             await client.say("You can now post in #interludes. Role will be automatically revoked after an hour.")
             await asyncio.sleep(60*60*1)
-            await client.remove_roles(user, role)
+            await member.remove_roles(user, role)
             
            
     
@@ -922,7 +926,7 @@ async def toggle(ctx, req_role="Active"):
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
                  " Use >wound 'Hit Vitals' to find specfic wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
-    loc=await sid(ctx.message.server.id)
+    loc=await sid(ctx.message.guild.id)
     #0 is wd20, 1 is skitterdice, 2 is original wd
     if loc=="gh":
         f=0
@@ -971,7 +975,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
                 return True
         return
     elif "typ" not in locals():
-        await client.add_reaction(ctx.message,"❌")
+        await message.add_reaction(ctx.message,"❌")
         return
     #shorthand code
     repeatlist=[]
@@ -1001,7 +1005,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
                 if aimt.casefold() == "limbs":
                     limbaim=True
                 else:
-                    await client.add_reaction(ctx.message,"❌")
+                    await message.add_reaction(ctx.message,"❌")
                     return
             elif aimt.casefold()=="h":
                 aimt="Head"
@@ -1135,7 +1139,7 @@ async def roll(ctx,formula="3d20+4",*comment):
         else:
             comment=comment2
         formula="3d20+4"
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if (loc==283841245975937034) and (formula=="3d20+4"):
         formula="3d20+6"
     if "d" in formula.casefold():
@@ -1308,7 +1312,7 @@ tag_muted=False #global
 async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
     if (tag==None) or (tag.casefold()=="empty"):
-        await client.add_reaction(ctx.message,"❌")
+        await message.add_reaction(ctx.message,"❌")
     elif tag.casefold()=="create".casefold():
         global tag_muted
         if tag_muted==True:
@@ -1381,7 +1385,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
                     await client.say(i[1])
         else:
             if not (await ctx.invoke(wound,severity=str(tag))):
-                await client.add_reaction(ctx.message,"❌")
+                await message.add_reaction(ctx.message,"❌")
 
 #Can use this to stop tag abuse
 @client.command(pass_context=True,hidden=True)
@@ -1392,10 +1396,10 @@ async def tagToggle(ctx):
         return
     if tag_muted==False:
         tag_muted=True
-        await client.add_reaction(ctx.message,"🔥")
+        await message.add_reaction(ctx.message,"🔥")
     elif tag_muted==True:
         tag_muted=False
-        await client.add_reaction(ctx.message,"🌊")
+        await message.add_reaction(ctx.message,"🌊")
     else:
         await client.say("Beep Boop. Error.")
 
@@ -1428,7 +1432,7 @@ async def rank(ctx):
         
 @rank.command(pass_context=True)
 async def ladder(ctx, mode="lax"):
-    loc=ctx.message.server.id        
+    loc=ctx.message.guild.id        
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
     sort_rank=sorted(rankings,key=operator.itemgetter(1), reverse=True)
@@ -1446,7 +1450,7 @@ async def ladder(ctx, mode="lax"):
         if i[2]<RD_cutoff:
             ladder_names.append([i[0],int(round(i[1],0))])
     ladder_list=list(enumerate(ladder_names,1))
-    ladder_str=[f"Ladder for {ctx.message.server}"+os.linesep]
+    ladder_str=[f"Ladder for {ctx.message.guild}"+os.linesep]
     for x in ladder_list:
         pos = await int_to_roman(x[0])
         ladder_str+=((f"**{pos}**. {x[1][0]}  *{x[1][1]}*"+os.linesep))
@@ -1459,7 +1463,7 @@ async def ladder(ctx, mode="lax"):
     
 @rank.command(pass_context=True)
 async def show(ctx, cape=None):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if cape==None:
         await client.say(f"Forgot something? Maybe your name, {ctx.message.author.nick}?")
     with open(f"glicko{loc}.txt") as f:
@@ -1479,7 +1483,7 @@ async def _help(ctx,cape=None):
 
 @rank.command(pass_context=True)
 async def make(ctx,cape=None):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if cape==None:
         await client.say("I do need a name for you if this is going to work.")
     entry=[]
@@ -1510,7 +1514,7 @@ async def make(ctx,cape=None):
     
 @rank.command(pass_context=True)
 async def odds(ctx,cape1,cape2):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
     c1=False
@@ -1544,7 +1548,7 @@ async def odds(ctx,cape1,cape2):
 
 @rank.command(aliases=["u"],pass_context=True)
 async def update(ctx,cape, opponent, outcome,inv=False):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if type(outcome)==str:
         if outcome=="win":
             outcome=1
@@ -1674,7 +1678,7 @@ async def account(ctx):
 
 @account.command(pass_context=True,description="Check how many more donuts you can afford.")
 async def show(ctx, cape=None):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     with open(f"cash{loc}.txt") as f:
         accounts = json.load(f)
     #print(accounts)
@@ -1685,7 +1689,7 @@ async def show(ctx, cape=None):
 
 @account.command(pass_context=True,description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.")
 async def make(ctx,cape=None,amount=0,income=0):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
@@ -1716,7 +1720,7 @@ async def make(ctx,cape=None,amount=0,income=0):
     
 @account.command(aliases=["u"],pass_context=True,description="Keep track of expenses and gains with this.")
 async def update(ctx,cape, amount):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
@@ -1739,7 +1743,7 @@ async def update(ctx,cape, amount):
         
 @account.command(aliases=["s"],pass_context=True,description="Send money to another account.")
 async def send(ctx,cape,target, amount):        
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
@@ -1769,7 +1773,7 @@ async def send(ctx,cape,target, amount):
 
 @account.command(aliases=["i"],pass_context=True,description="Adjust your periodic income here. Use the weekly amount.")
 async def income(ctx,cape, amount):
-    loc=ctx.message.server.id
+    loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
