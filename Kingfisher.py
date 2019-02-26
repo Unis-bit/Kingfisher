@@ -63,7 +63,7 @@ muted_usr=[]
 
 clientloop=asyncio.new_event_loop()
 asyncio.set_event_loop(clientloop)
-owner = ["138340069311381505"] #hyper#4131
+owner = [138340069311381505] #hyper#4131
 
 logging.basicConfig(level=logging.INFO)
 #logger = logging.getLogger('discord')
@@ -187,17 +187,17 @@ async def int_to_roman(input):
 
 #figure out which server this command runs on. Remind me to actually write server configs one day. One day. xd.
 async def sid(loc):
-    if loc=="283841245975937034":
+    if loc==283841245975937034:
         sid="detroit"
-    elif loc=="465651565089259521":
+    elif loc==465651565089259521:
         sid="gh"
-    elif loc=="406587085278150656":
+    elif loc==406587085278150656:
         sid="segovia"
-    elif loc=="434729592352276480":
+    elif loc==434729592352276480:
         sid="test"
-    elif loc=="457290411698814980":
+    elif loc==457290411698814980:
         sid="la"
-    elif loc=="521547663641018378":
+    elif loc==521547663641018378:
         sid="autumn lane"
     else:
         sid="undefined"
@@ -276,11 +276,7 @@ def no_pm(ctx):
 
 @client.event
 async def on_member_join(member):
-    if (member.server.id == "283841245975937034"): #or (member.server.id == "434729592352276480"):
-        #await client.send_message(member,"**Welcome to V&V!**\nDon't hesitate to say hi in chat! Check out our New Player Guide at https://vanwiki.org/oc/new_player_guide")
-        await client.send_message(discord.User(id=owner[0]),f"New player joined {member.server.name}: {member.name}")
-    elif (member.server.id == "465651565089259521"):    
-        await client.send_message(discord.User(id=owner[0]),f"New player joined {member.server.name}: {member.name}")
+    await client.send_message(discord.User(id=owner[0]),f"New player joined {member.server.name}: {member.name}")
         
 #@client.event
 #async def on_command_error(error,ctx):
@@ -378,13 +374,15 @@ async def announce(ctx,*message:str):
     targets=[]
     for i in servs:
         print(i.name)
+        print(i.default_channel)
+        print(i.member_count)
         targets.append(i.default_channel)
         #for j in i.channels:
             #if j.name=="general" or j.name=="chat":
                 #targets.append(j)
         
     for i in targets:
-        print(i.name)
+        #print(i.name)
         #await client.send_message(i,content=" ".join(message))
         return
             
@@ -606,7 +604,7 @@ async def trigger(ctx, id=None):
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
-    if ctx.message.server.id=="465651565089259521":
+    if ctx.message.server.id==465651565089259521:
         await client.say(playmap_gh)
     else:
         await client.say(playmap)
@@ -614,13 +612,13 @@ async def _map(ctx):
 @client.command(pass_context=True, description="Use this command to claim squares on the map. Faction name needs to be spelled right. Use >claim to see the current map. Use >claim factions to see available factions")
 async def claim(ctx,faction = None,square:int = None):
     loc=ctx.message.server.id #283841245975937034 detroit, 465651565089259521 GH
-    if loc=="283841245975937034":
+    if loc==283841245975937034:
         sid="d"
-    elif loc=="465651565089259521":
+    elif loc==465651565089259521:
         sid="gh"
     else:
         sid="test"
-    if (ctx.message.channel.id != "358409511838547979") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "478240151987027978"):
+    if (ctx.message.channel.id != 358409511838547979) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 478240151987027978):
         #await client.send_message(discord.User(id=owner[0]),f"Claiming in {ctx.message.channel}: {ctx.message.author.name}")
         await client.send_message(f"Can only claim in #faction-actions!")
         return
@@ -735,7 +733,6 @@ async def avatar(ctx, user):
 @client.command(pass_context=True,description="No more %vial 5.",hidden=True)
 async def stopspam(ctx, i:int):
     if ctx.message.author.id not in owner:
-        await client.say("Need something deleted? <@&310528314412630027>.")
         return
     try:
         await client.purge_from(ctx.message.channel,limit=i)
@@ -1139,7 +1136,7 @@ async def roll(ctx,formula="3d20+4",*comment):
             comment=comment2
         formula="3d20+4"
     loc=ctx.message.server.id
-    if (loc=="283841245975937034") and (formula=="3d20+4"):
+    if (loc==283841245975937034) and (formula=="3d20+4"):
         formula="3d20+6"
     if "d" in formula.casefold():
         d_pattern=re.compile("(d|D)(\d)*")
@@ -1159,7 +1156,7 @@ async def roll(ctx,formula="3d20+4",*comment):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
             mod_match=mod_pattern.search(formula)
             modifier=int(mod_match.group()[1:]) 
-            if loc=="283841245975937034":
+            if loc==283841245975937034:
                 modifier=6+modifier
             else:
                 modifier=4+modifier
@@ -1169,7 +1166,7 @@ async def roll(ctx,formula="3d20+4",*comment):
             modifier=int(mod_match.group())
     else:
         if dice==20:
-            if loc=="283841245975937034":
+            if loc==283841245975937034:
                 modifier=6
             else:
                 modifier=4
@@ -1689,7 +1686,7 @@ async def show(ctx, cape=None):
 @account.command(pass_context=True,description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.")
 async def make(ctx,cape=None,amount=0,income=0):
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
     if cape==None:
@@ -1720,7 +1717,7 @@ async def make(ctx,cape=None,amount=0,income=0):
 @account.command(aliases=["u"],pass_context=True,description="Keep track of expenses and gains with this.")
 async def update(ctx,cape, amount):
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1743,7 +1740,7 @@ async def update(ctx,cape, amount):
 @account.command(aliases=["s"],pass_context=True,description="Send money to another account.")
 async def send(ctx,cape,target, amount):        
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1773,7 +1770,7 @@ async def send(ctx,cape,target, amount):
 @account.command(aliases=["i"],pass_context=True,description="Adjust your periodic income here. Use the weekly amount.")
 async def income(ctx,cape, amount):
     loc=ctx.message.server.id
-    if (ctx.message.channel.id != "478240151987027978") and (ctx.message.channel.id != "435874236297379861") and (ctx.message.channel.id != "537152965375688719"):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
         await client.say("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1800,7 +1797,7 @@ async def account_decay():
         decay=0.9**(1/7) #10% decay per week
         #gh loc="465651565089259521"
         #vanwiki loc="434729592352276480"
-        channel = client.get_channel("478240151987027978") # channel ID goes here
+        channel = client.get_channel(478240151987027978) # channel ID goes here
         #GH 478240151987027978
         #vanwiki 435874236297379861
         last_updated=[]
@@ -1841,10 +1838,10 @@ async def account_decay():
 async def rank_decay():
         c= 60 # c = 60, assuming a rating decay period of a month, and a typical rating of 150
         # c is the result of 350=sqroot(typical rating**2+rating decay period*c)
-        loc="465651565089259521"
+        loc=465651565089259521
         #gh loc="465651565089259521"
         #vanwiki loc="434729592352276480"
-        channel = client.get_channel("478240151987027978") # channel ID goes here
+        channel = client.get_channel(478240151987027978) # channel ID goes here
         #GH 478240151987027978 facacs
         #vanwiki 435874236297379861 testing
         last_updated=[]
