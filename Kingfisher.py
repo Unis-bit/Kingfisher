@@ -145,7 +145,7 @@ async def on_ready():
             #print(time.time()-i['time'])
             content=i['content']
             destination=bot.get_channel(i['destination'])
-            sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send_message(content),loop,), kwargs={})
+            sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
     #end resume
     
     #roll macros
@@ -224,7 +224,7 @@ async def specialWounds(bot,ctx,case):
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {case}",icon_url=ctx.message.author.avatar_url)
             for i in bashes:
                 embed.add_field(name=i[3], value=f"{i[4]}\n*Location: {i[2]}, Stage: {i[1]}*")
-        await bot.send_message(ctx.message.channel,embed=embed)
+        await ctx.message.channel.send(embed=embed)
     elif (case=="Cremated") or (case=="Whited Out") or (case=="Disintegrated (shock)"):
         if case=="Cremated":
             typ="Burn"
@@ -236,7 +236,7 @@ async def specialWounds(bot,ctx,case):
         while random.randint(0,1) < 1:
             await asyncio.sleep(0.2)
             await ctx.invoke(wound,typus=typ,tag=case)
-        await bot.send_message(ctx.message.channel,"Tails.")
+        await ctx.message.channel.send("Tails.")
     elif (case=="Iced Over"):
         await asyncio.sleep(0.2)
         await ctx.invoke(wound,typus="Freeze",tag=case,title="__**Effect**__")
@@ -309,7 +309,7 @@ async def order67(ctx):
     #TODO: add confirmation
     chans=ctx.message.guild.channels
     for i in chans:
-        await i.delete
+        await i.delete()
 
 @bot.command(  description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
 async def nest(ctx):
@@ -363,7 +363,7 @@ async def die(ctx):
         f.truncate()
         queue=sPlanner.queue
         for i in queue:
-            reminders.append({"time":i[0],'content':i.argument[0].gi_frame.f_locals['content'],'destination':i.argument[0].gi_frame.f_locals['destination'].id})
+            reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
         json.dump(reminders,f)
     #print(reminders)
 
@@ -387,9 +387,9 @@ async def announce(ctx,*message:str):
     targets=[]
     for i in servs:
         print(i.name)
-        print(i.default_channel)
+        print(i.system_channel)
         print(i.member_count)
-        targets.append(i.default_channel)
+        targets.append(i.system_channel)
         #for j in i.channels:
             #if j.name=="general" or j.name=="chat":
                 #targets.append(j)
@@ -401,7 +401,7 @@ async def announce(ctx,*message:str):
             
     
 @bot.command(  description="Used to send messages via Kingfisher to a specific channel.",hidden=True)
-async def tell(ctx,channel,*message:str):
+async def tell(ctx,channel:int,*message:str):
     if ctx.message.author.id not in owner:
         return  
     target=bot.get_channel(channel)
@@ -446,6 +446,7 @@ async def updateFeed(ctx):
     augfeed = augSheet.get_all_values()
     triggerSheet = RefSheet.worksheet("Triggers")
     triggerfeed = triggerSheet.get_all_values()
+    await ctx.message.add_reaction("\U00002714")
 
 #fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
 @bot.command(  description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.")
@@ -728,13 +729,14 @@ async def cape(ctx,*cape):
     loop = asyncio.get_event_loop()
     async with aiohttp.ClientSession(loop=loop) as session:
         async with session.get(domain) as response:
-            response_text = response.text()
+            response_text = await response.text()
             #print(r.text)
             status="Status"
             if status in response_text:
                 await ctx.send(domain)
             else:
                 await ctx.send("No such article. Create it at "+domain)
+        session.close
 
 
 @bot.command( description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
@@ -947,7 +949,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     elif loc=="la":
         f=2 #todo: add the original wd, switch this to 2
     elif loc=="test":
-        f=2 
+        f=0
     elif loc=="autumn lane":
         f=2
     else:
