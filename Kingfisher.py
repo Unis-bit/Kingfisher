@@ -207,12 +207,12 @@ async def sid(loc):
 
 #Deals with special wounds that require more interaction. Most common used to roll the effects chains for critical wounds.
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
-async def specialWounds(bot,ctx,case):
+async def specialWounds(bot,ctx,case,f):
     ctx.invoked_with="wound"
     if case=="Demolished":
         bashes=[]
         limb=random.choice(["Arm","Legs","Head"])
-        for i in feed:
+        for i in feed[f]:
             if i[0]=="Bash":
                 if i[1]=="Moderate":
                     if i[2]==limb:
@@ -1043,7 +1043,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         await ctx.send(embed=embed)
         for i in damages:
             if i[3] in specWounds:
-                 await specialWounds(bot,ctx,i[3])
+                 await specialWounds(bot,ctx,i[3],f)
              #embed.add_field(name="Severity", value=severity, inline=True)
              #embed.add_field(name="Aim", value=aim, inline=True)
     return True
