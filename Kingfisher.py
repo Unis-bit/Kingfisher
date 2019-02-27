@@ -273,8 +273,9 @@ def mute_user(ctx):
 
 @bot.event
 async def on_member_join(member):
-    own = await bot.get_user(owner[0])
-    await own.send(f"New player joined {member.guild.name}: {member.name}")
+    own = bot.get_user(owner[0])
+    await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
+    await own.send(f"{member.avatar}")
         
 #@bot.event
 #async def on_command_error(error,ctx):
@@ -378,15 +379,10 @@ async def announce(ctx,*message:str):
         await ctx.send(i.name)
     targets=[]
     for i in servs:
-        print(f"{i.name} {i.system_channel} {i.member_count}")
-        targets.append(i.system_channel)
-        #for j in i.channels:
-            #if j.name=="general" or j.name=="chat":
-                #targets.append(j)
-        
+        await ctx.send(f"{i.name} {i.system_channel} {i.member_count}")
+        targets.append(i.system_channel) 
     for i in targets:
-        #print(i.name)
-        #await bot.send_message(i,content=" ".join(message))
+        #await i.send_message(" ".join(message))
         return
             
     
@@ -1312,7 +1308,6 @@ tag_muted=False #global
 
 #tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes. So many memes.
 @bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect"])
-@guild_only()
 async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
     if (tag==None) or (tag.casefold()=="empty"):
