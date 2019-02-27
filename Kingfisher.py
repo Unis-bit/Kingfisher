@@ -275,7 +275,6 @@ def mute_user(ctx):
 async def on_member_join(member):
     own = bot.get_user(owner[0])
     await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
-    await own.send(f"{member.avatar}")
         
 #@bot.event
 #async def on_command_error(error,ctx):
@@ -1346,7 +1345,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
                 await ctx.send(f"Tag not found!")
                 return
             ownerID=tagsSheet.cell(target_tag.row,target_tag.col+2).value
-            tagowner=discord.utils.get(bot.get_all_members(), id=str(ownerID))
+            tagowner=discord.utils.get(bot.get_all_members(), id=int(ownerID))
             if tagowner is None:
                 await ctx.send(f"{content1} is owned by an unknown user.")
                 return
@@ -1357,7 +1356,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
             tagsSheet = RefSheet.worksheet("Tags")
             target_tag=tagsSheet.find(content1.casefold())
-            if ctx.message.author.id==tagsSheet.cell(target_tag.row, target_tag.col+2).value or ctx.message.author.id=="138340069311381505":
+            if ctx.message.author.id==int(tagsSheet.cell(target_tag.row, target_tag.col+2).value) or ctx.message.author.id==138340069311381505:
                 tagsSheet.delete_row(target_tag.row)
                 tags = tagsSheet.get_all_values()
                 await ctx.send(f"{content1} deleted.")
@@ -1368,11 +1367,10 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
             tagsSheet = RefSheet.worksheet("Tags")
             target_tag=tagsSheet.find(content1.casefold()) #change to findall, discard non-titles
-            print(f"{target_tag.row},{target_tag.col}")
             if target_tag.col!=1:
                 print("tag column error!")
                 return
-            if ctx.message.author.id==tagsSheet.cell(target_tag.row, target_tag.col+2).value or ctx.message.author.id=="138340069311381505":
+            if ctx.message.author.id==int(tagsSheet.cell(target_tag.row, target_tag.col+2).value) or ctx.message.author.id==138340069311381505:
                 tagsSheet.update_cell(target_tag.row,target_tag.col+1, content2)
                 tags = tagsSheet.get_all_values()
                 await ctx.send(f"{content1} updated.")
