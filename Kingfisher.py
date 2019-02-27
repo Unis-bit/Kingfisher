@@ -127,7 +127,7 @@ async def on_ready():
     print('https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=8'.format(bot.user.id))
     print('--------')
     print('running...')
-    await bot.change_presence(activity=discord.Game(name='>help'))
+    await bot.change_presence(activity=discord.Game(name='>help | >nest'))
     global b_task
     global b_task2
     b_task=bot.loop.create_task(account_decay())
