@@ -217,7 +217,7 @@ async def specialWounds(bot,ctx,case,f):
                 if i[1]=="Moderate":
                     if i[2]==limb:
                         bashes.append(i)
-            embed = discord.Embed(colour=discord.Colour(typ_colours["Bash"]))
+            embed = discord.Embed(title="__**Effect**__",colour=discord.Colour(typ_colours["Bash"]))
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {case}",icon_url=ctx.message.author.avatar_url)
             for i in bashes:
                 embed.add_field(name=i[3], value=f"{i[4]}\n*Location: {i[2]}, Stage: {i[1]}*")
@@ -1328,7 +1328,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
         new_tag=tagsSheet.find("empty")
         tagsSheet.update_cell(new_tag.row,new_tag.col, content1.casefold())
         tagsSheet.update_cell(new_tag.row,new_tag.col+1, content2)
-        tagsSheet.update_cell(new_tag.row,new_tag.col+2, ctx.message.author.id)
+        tagsSheet.update_cell(new_tag.row,new_tag.col+2, str(ctx.message.author.id))
         tagsSheet.update_cell(new_tag.row+1,new_tag.col, "empty")
         tags = tagsSheet.get_all_values()
         await ctx.send(f"{content1} has been created.")
