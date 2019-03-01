@@ -890,7 +890,7 @@ async def toggle(ctx, req_role="Active"):
             await ctx.send("Go Team Blue Shield!")
 
     elif req_role.casefold()=="DEEP".casefold():
-        role = discord.utils.get(user.guild.roles, name="BLUE")
+        role = discord.utils.get(user.guild.roles, name="DEEP")
         opprole= discord.utils.get(user.guild.roles, name="RED")
         if role==None:
             await ctx.send("No DEEP role defined.")
