@@ -44,9 +44,9 @@ areas = [(57,98 ),(157,106 ),(229,105),(322,103),(416,103),(526,63),(604,46),(69
 
 #gh stuff
 gh_factions={"zenith":(222,21,228),"fixers":ImageColor.getrgb("#6584ff"),"demons":ImageColor.getrgb("#ff7a00"),"plastics":ImageColor.getrgb("#ff69b4"),"avalon":(173, 20, 87),
-"children":(155, 89, 182),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
+"children":(155, 89, 182),"uplift":(26, 151, 73),"valhalla":(241, 196, 15), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
-#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),"deplorables":(241, 196, 15),
+#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),,
 #"court":(101, 111, 255),"dominion":(192, 49, 53),
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
@@ -142,6 +142,8 @@ async def on_ready():
             #print(time.time()-i['time'])
             content=i['content']
             destination=bot.get_channel(i['destination'])
+            print(content)
+            print(destination.name)
             sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
     #end resume
     
@@ -333,9 +335,11 @@ async def remind(ctx,time,*message):
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
     #coro=bot.send_message(ctx.message.channel,content)
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(ctx.message.channel.send(content,),loop,), kwargs={})
-    #print(sPlanner.queue)
+    print(sPlanner.queue)
 
-
+@bot.command()
+async def remq(ctx):
+    print(sPlanner.queue)
 
 @bot.command(  description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
@@ -1150,8 +1154,12 @@ async def roll(ctx,formula="3d20+4",*comment):
             keep=True
         dice=int(d_match.group()[1:])   
     else:
-        dice=20
-        keep=True
+        if "c" in formula.casefold():
+            dice=10
+            keep=True
+        else:
+            dice=20
+            keep=True
     #print(f"dice: {dice}")
     
     if ("+" in formula) or ("-" in formula):
