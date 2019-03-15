@@ -1066,6 +1066,7 @@ async def save(ctx,title,*formulas):
         await ctx.send("First letter of your title HAS to be the $ sign!")
         return
     user=ctx.message.author.id
+    user=str(user)
     if not user in macros:
         macros[user]={}
     macros[user][title]=[]
@@ -1088,6 +1089,7 @@ async def save(ctx,title,*formulas):
 async def delete(ctx,title):
     global macros
     user=ctx.message.author.id
+    user=str(user)
     macros[user].pop(title)
     await ctx.send(f"{title} has been removed from your macros.")
     with open(f"roll_macros.txt",mode="w+") as f:
@@ -1098,6 +1100,7 @@ async def delete(ctx,title):
 async def update(ctx,title,*formulas):
     global macros
     user=ctx.message.author.id
+    user=str(user)
     macros[user].pop(title)
     macros[user][title]=[]
     for i in formulas:
@@ -1110,7 +1113,10 @@ async def update(ctx,title,*formulas):
 @macro.command( )
 async def show(ctx,title=None,user=None):
     user=ctx.message.author.id
+    user=str(user)
     macro_list=[]
+    print(user)
+    print(macros[user])
     for i in macros[user]:
         macro_list.append(f"Title: {i}, Formulas: {' '.join(macros[user][i])}\n")
     await ctx.send(f"Saved macros for {ctx.message.author.name} are:\n{''.join(macro_list)}")
@@ -1121,7 +1127,7 @@ async def show(ctx,title=None,user=None):
 @bot.command( description="See >tag roll for help",aliases=["r"])
 async def roll(ctx,formula="3d20+4",*comment):
     if formula[0]=="$":
-        user=ctx.message.author.id
+        user=str(ctx.message.author.id)
         if formula in macros[user]:
             for i in macros[user][formula]:
                 if "#" in i:
