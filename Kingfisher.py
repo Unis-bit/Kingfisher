@@ -34,8 +34,8 @@ version="0.2 Rewrite"
 
 
 #keys for the map updating function
-factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60), "authority":(109, 130, 187),"leeches":(137, 90, 0),"eclipse":(0, 126, 133), 
-"neutral":(255,255,255), "independent":(136, 0, 21), "sharks":(82, 95, 157), "hearth":(255, 215, 0) }
+factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60),"eclipse":(0, 126, 133), 
+"neutral":(255,255,255), "independent":(136, 0, 21), "hearth":(255, 215, 0) }
 areas = [(57,98 ),(157,106 ),(229,105),(322,103),(416,103),(526,63),(604,46),(695,48),(781,81),(886,67),(971,68),(1044,62),(66,211),(163,206),(247,203),
 (322,198),(396,198),(492,154),(636,132),(681,145),(781,129),(885,129),(955,163),(1015,163),(1065,140),(69,293),(153,293),(261,293),(355,293),(433,293),(544,243),
 (807,222),(895,215),(998,238),(1060,222),(1139,179),(165,368),(258,383),(347,401),(403,364),(500,341),(557,325),(604,293),(668,285),(759,322),(817,269),(933,293),
@@ -43,11 +43,11 @@ areas = [(57,98 ),(157,106 ),(229,105),(322,103),(416,103),(526,63),(604,46),(69
 (724,383 ),(736,483 ),(757,453 ),(818,439 ),(882,415 ),(500,622 ),(595,592 ),(674,570 ),(718,540 ),(795,484 ),(843,464 ),(431,706 ),(510,682 ),(567,648 ),(444,780)]
 
 #gh stuff
-gh_factions={"zenith":(222,21,228),"fixers":ImageColor.getrgb("#6584ff"),"demons":ImageColor.getrgb("#ff7a00"),"plastics":ImageColor.getrgb("#ff69b4"),"avalon":(173, 20, 87),
-"children":(155, 89, 182),"uplift":(26, 151, 73),"valhalla":(241, 196, 15), "neutral":(255,255,255), "independent":(163, 145, 108)}
+gh_factions={"prosperity":ImageColor.getrgb("#d4af37"), "zenith":(222,21,228),"plastics":ImageColor.getrgb("#ff69b4"),
+"avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
-#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),,
-#"court":(101, 111, 255),"dominion":(192, 49, 53),
+#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),"demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
+#"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
 (473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
@@ -1701,7 +1701,7 @@ async def show(ctx, cape=None):
 @account.command( description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.")
 async def make(ctx,cape=None,amount=0,income=0):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild!=457290411698814980):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     if cape==None:
@@ -1732,7 +1732,7 @@ async def make(ctx,cape=None,amount=0,income=0):
 @account.command(aliases=["u"], description="Keep track of expenses and gains with this.")
 async def update(ctx,cape, amount):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild!=457290411698814980):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1755,7 +1755,7 @@ async def update(ctx,cape, amount):
 @account.command(aliases=["s"], description="Send money to another account.")
 async def send(ctx,cape,target, amount):        
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild!=457290411698814980):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1785,7 +1785,7 @@ async def send(ctx,cape,target, amount):
 @account.command(aliases=["i"], description="Adjust your periodic income here. Use the weekly amount.")
 async def income(ctx,cape, amount):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719):
+    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild!=457290411698814980):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -1808,15 +1808,16 @@ async def income(ctx,cape, amount):
     
 
 async def account_decay():
-        loc="465651565089259521"
+        locs=[465651565089259521,457290411698814980]
         decay=0.9**(1/7) #10% decay per week
         #gh loc="465651565089259521"
         #vanwiki loc="434729592352276480"
+        #LA loc = 457290411698814980
         channel = bot.get_channel(478240151987027978) # channel ID goes here
         #GH 478240151987027978
         #vanwiki 435874236297379861
         last_updated=[]
-        while True:
+        for loc in locs:
             if os.path.isfile(f"decay{loc}.txt"):
                 with open(f"decay{loc}.txt",mode="r+") as f:
                     last_updated = json.load(f)
@@ -1828,11 +1829,13 @@ async def account_decay():
                                 g.truncate()
                                 wealth=0
                                 for i in accounts:
-                                    i[1]=round(i[1]*decay)
+                                    if loc==465651565089259521:
+                                        i[1]=round(i[1]*decay)
                                     i[1]=i[1]+round((i[2]/7))
                                     wealth+=i[1]
                                 json.dump(accounts,g)
-                            await channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            if loc==465651565089259521:
+                                await channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                         else:
                             channel.send_message("No accounts on file.")
                         f.seek(0)
