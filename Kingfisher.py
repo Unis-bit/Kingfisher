@@ -16,7 +16,7 @@ import threading
 import traceback
 
 
-import discord #the crown jewel
+import discord  #the crown jewel
 import aiohttp
 import gspread
 import pytz
@@ -31,6 +31,8 @@ version="0.2 Rewrite"
 #for colours
 #www.htmlcsscolor.com/hex
 
+
+#TODO: add https://cdn.discordapp.com/attachments/476482380123602946/561997332212875266/lbj5xp1y2hp21.png style colour wheel for new role colour suggestions!
 
 
 #keys for the map updating function
@@ -203,6 +205,8 @@ async def sid(loc):
         sid="la"
     elif loc==521547663641018378:
         sid="autumn lane"
+    elif loc==343748202379608065:
+        sid="gaming_inc"
     else:
         sid="undefined"
     return sid
@@ -399,7 +403,7 @@ async def tell(ctx,channel:int,*message:str):
 @bot.command( name='eval')
 async def _eval(ctx, *, code):
     if ctx.message.author.id not in owner:
-        return  
+        return 
     """A bad example of an eval command"""
     await ctx.send(eval(code))
     
@@ -462,7 +466,7 @@ async def vial(ctx, avial=None):
     if output==None:
         await ctx.send(f"Vial {avial} not found.")
         return
-    
+
     vialcolour=discord.Colour(0x00ffc4)
     embed = discord.Embed(title=f"__{output[0][:-1]}__", colour=vialcolour,url="https://docs.google.com/spreadsheets/d/1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
     embed.add_field(name="O [Desirability]",value=output[1][3:],inline=False)
@@ -935,12 +939,10 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         f=0
     elif loc=="detroit":
         f=1 #detroit uses skitterdice
-    elif loc=="la":
-        f=2 #todo: add the original wd, switch this to 2
+    elif loc=="la" or loc=="gaming_inc" or loc=="autumn lane":
+        f=2 
     elif loc=="test":
         f=0
-    elif loc=="autumn lane":
-        f=2
     else:
         f=0 #default is wd20
     if aim.isdigit():
@@ -1297,9 +1299,11 @@ async def roll(ctx,formula="3d20+4",*comment):
         #print(out_roll)
     if brief==True:
         out_saved=out_roll
+        print(out_roll)
         out_roll=[f"{requester}: "]
-        brief_pattern=re.compile("\*\*\d+\*\*")
+        brief_pattern=re.compile("\*\*-*\d+\*\*")
         brief_match=brief_pattern.findall(''.join(out_saved))
+        print(brief_match)
         for k in range(0,len(brief_match)):
             if k==len(brief_match)-1:
                 critcheck=brief_match[k].replace("*","")
