@@ -1106,7 +1106,15 @@ async def update(ctx,title,*formulas):
     macros[user].pop(title)
     macros[user][title]=[]
     for i in formulas:
-        macros[user][title].append(i)
+        if i[0]=="#":
+            try:
+                r_formula=macros[user][title].pop()
+            except IndexError:
+                await ctx.send("Need a roll code before any comments!")
+                return
+            macros[user][title].append(r_formula+i)
+        else:
+            macros[user][title].append(i)
     with open(f"roll_macros.txt",mode="w+") as f:
         json.dump(macros,f)
     await ctx.send(f"{title} has been updated.")
