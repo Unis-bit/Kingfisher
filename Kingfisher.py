@@ -640,7 +640,7 @@ async def claim(ctx,faction = None,square:int = None):
             await ctx.send(", ".join(list(gh_factions.keys())))
             return
     if faction == None and square == None:
-        await ctx.send(f"https://vanwiki.org/kingfisher/map_{sid}/map.png?nocaching={cacher}")
+        await ctx.send(f"https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
         return
     if faction != None and square == None:
         await ctx.send("Correct format: >claim Faction Square")
@@ -649,7 +649,7 @@ async def claim(ctx,faction = None,square:int = None):
     except (KeyError,IndexError):
         await ctx.message.add_reaction("❌")
         return
-    await ctx.send(f"Map updated. https://vanwiki.org/kingfisher/map_{sid}/map.png?nocaching={cacher}")
+    await ctx.send(f"Map updated. https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
     #await bot.send_file(ctx.message.channel,'Detroit_map.png')
 
 @bot.command(description="Bullying.",hidden=True)
@@ -706,7 +706,7 @@ async def eve(ctx, args = 0):
 
 @bot.command(description="Forgot a simple URL? I got you.")
 async def wiki(ctx,*args):
-    await ctx.send("https://vanwiki.org/start")
+    await ctx.send("https://www.hivewiki.de/start")
 
 @bot.command( description="Link a cape's vanwiki article.")
 async def cape(ctx,*cape):
@@ -717,7 +717,7 @@ async def cape(ctx,*cape):
     guild=await sid(loc)
     if loc=="undefined":
         await ctx.message.add_reaction("❌")
-    domain=f"https://vanwiki.org/{guild}/cape/{cape}"
+    domain=f"https://www.hivewiki.de/{guild}/cape/{cape}"
     #async with aiohttp.get(domain, allow_redirects=False) as r:
     loop = asyncio.get_event_loop()
     async with aiohttp.ClientSession(loop=loop) as session:
@@ -1820,6 +1820,19 @@ async def income(ctx,cape, amount):
     
 
 async def account_decay():
+        
+        #trying a dirty fix for the reminders issue.
+        reminders=[]
+        with open(f"reminders.txt",mode="w+") as f:
+            f.seek(0)
+            f.truncate()
+            queue=sPlanner.queue
+            for i in queue:
+                reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
+        json.dump(reminders,f)
+
+
+
         locs=[465651565089259521,457290411698814980]
         decay=0.9**(1/7) #10% decay per week
         #gh loc="465651565089259521"
