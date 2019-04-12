@@ -280,7 +280,8 @@ def mute_user(ctx):
 @bot.event
 async def on_member_join(member):
     own = bot.get_user(owner[0])
-    await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
+    if (sid(member.guild.id)=="gh"):
+        await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
         
 #@bot.event
 #async def on_command_error(error,ctx):
@@ -339,10 +340,6 @@ async def remind(ctx,time,*message):
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
     #coro=bot.send_message(ctx.message.channel,content)
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(ctx.message.channel.send(content,),loop,), kwargs={})
-    print(sPlanner.queue)
-
-@bot.command()
-async def remq(ctx):
     print(sPlanner.queue)
 
 @bot.command(  description="Shuts the bot down. Owner only.",hidden=True)
@@ -543,7 +540,7 @@ async def perk(ctx, category=None):
     #dealing with banned perks
     bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard","finemmane"]
     while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
-        print("banned perk rolled")
+        print(f"banned perk rolled: {p_match.group()[:-1]}")
         out=random.randint(1,len(perksfeed)-3)
         while perksfeed[out][typus]=="":
             out=random.randint(1,len(perksfeed)-3)
@@ -1125,8 +1122,6 @@ async def show(ctx,title=None,user=None):
     user=ctx.message.author.id
     user=str(user)
     macro_list=[]
-    print(user)
-    print(macros[user])
     for i in macros[user]:
         macro_list.append(f"Title: {i}, Formulas: {' '.join(macros[user][i])}\n")
     await ctx.send(f"Saved macros for {ctx.message.author.name} are:\n{''.join(macro_list)}")
@@ -1307,11 +1302,9 @@ async def roll(ctx,formula="3d20+4",*comment):
         #print(out_roll)
     if brief==True:
         out_saved=out_roll
-        print(out_roll)
         out_roll=[f"{requester}: "]
         brief_pattern=re.compile("\*\*-*\d+\*\*")
         brief_match=brief_pattern.findall(''.join(out_saved))
-        print(brief_match)
         for k in range(0,len(brief_match)):
             if k==len(brief_match)-1:
                 critcheck=brief_match[k].replace("*","")
