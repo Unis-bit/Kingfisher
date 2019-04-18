@@ -1823,6 +1823,7 @@ async def account_decay():
         #vanwiki loc="434729592352276480"
         #LA loc = 457290411698814980
         channel = bot.get_channel(478240151987027978) # channel ID goes here
+        LA_channel = bot.get_channel(457640092240969730)
         #GH 478240151987027978
         #vanwiki 435874236297379861
         last_updated=[]
@@ -1845,6 +1846,8 @@ async def account_decay():
                                 json.dump(accounts,g)
                             if loc==465651565089259521:
                                 await channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            if loc==457290411698814980:
+                                await LA_channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                         else:
                             channel.send_message("No accounts on file.")
                         f.seek(0)
@@ -1859,6 +1862,7 @@ async def account_decay():
                     last_updated=[]
                     last_updated.append(time.time())
                     json.dump(last_updated,f)
+            print("cash updated")
             await asyncio.sleep(60*60*3) # task runs every 3 hours
         
 
