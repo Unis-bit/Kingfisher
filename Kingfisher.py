@@ -36,12 +36,13 @@ version="0.2 Rewrite"
 
 
 #gh stuff
-gh_factions={"prosperity":ImageColor.getrgb("#d4af37"), "zenith":ImageColor.getrgb("#f8e900"),"royals":ImageColor.getrgb("#ff69b4"),
+gh_factions={"stronghold":ImageColor.getrgb("#7498b4"), "safeguard":ImageColor.getrgb("#8f34e2"),"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
 # "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
+#"prosperity":ImageColor.getrgb("#d4af37")
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
 (473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
@@ -158,7 +159,7 @@ async def mapUpdate(faction,square,sid):
     detroitmap = Image.open(f"map_{sid}/factionmap.png")
     legend = Image.open(f"map_{sid}/Legend_alpha.png")
     bg = Image.open(f"map_{sid}/background.png")
-    elif (sid=="gh") or (sid=="test"):
+    if (sid=="gh") or (sid=="test"):
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], (255,255,255))
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], gh_factions[faction])
     detroitmap.save(f"map_{sid}/factionmap.png")
@@ -267,8 +268,16 @@ def mute_user(ctx):
 @bot.event
 async def on_member_join(member):
     own = bot.get_user(owner[0])
-    if (sid(member.guild.id)=="gh"):
+    server=await sid(member.guild.id)
+    if (server=="gh") or (server=="test"):
         await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
+
+@bot.event
+async def on_member_remove(member):
+    own = bot.get_user(owner[0])
+    server=await sid(member.guild.id)
+    if (server=="gh") or (server=="test"):
+        await own.send(f"{member.name} left {member.guild.name}")
         
 #@bot.event
 #async def on_command_error(error,ctx):
@@ -293,9 +302,9 @@ async def order67(ctx):
         return
     await ctx.send("Oh. You're actually serious about this?")
     #TODO: add confirmation
-    chans=ctx.message.guild.channels
-    for i in chans:
-        await i.delete()
+    #chans=ctx.message.guild.channels
+    #for i in chans:
+    #   await i.delete()
 
 @bot.command(  description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
 async def nest(ctx):
@@ -614,10 +623,7 @@ async def claim(ctx,faction = None,square:int = None):
         return
     cacher=random.randint(1, 100000000000)
     if faction=="factions":
-        if sid=="d":
-            await ctx.send(", ".join(list(factions.keys())))
-            return
-        elif sid=="gh":
+        if sid=="gh":
             await ctx.send(", ".join(list(gh_factions.keys())))
             return
         elif sid=="test":
