@@ -35,20 +35,12 @@ version="0.2 Rewrite"
 #TODO: add https://cdn.discordapp.com/attachments/476482380123602946/561997332212875266/lbj5xp1y2hp21.png style colour wheel for new role colour suggestions!
 
 
-#keys for the map updating function
-factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60),"eclipse":(0, 126, 133), 
-"neutral":(255,255,255), "independent":(136, 0, 21), "hearth":(255, 215, 0) }
-areas = [(57,98 ),(157,106 ),(229,105),(322,103),(416,103),(526,63),(604,46),(695,48),(781,81),(886,67),(971,68),(1044,62),(66,211),(163,206),(247,203),
-(322,198),(396,198),(492,154),(636,132),(681,145),(781,129),(885,129),(955,163),(1015,163),(1065,140),(69,293),(153,293),(261,293),(355,293),(433,293),(544,243),
-(807,222),(895,215),(998,238),(1060,222),(1139,179),(165,368),(258,383),(347,401),(403,364),(500,341),(557,325),(604,293),(668,285),(759,322),(817,269),(933,293),
-(1018,313),(155,450),(268,477),(478,445),(538,413),(589,401),(658,346),(695,323),(814,334),(861,322 ),(971,373 ),(1061,371 ),(444,495 ),(557,502 ),(637,477 ),(669,417 ),
-(724,383 ),(736,483 ),(757,453 ),(818,439 ),(882,415 ),(500,622 ),(595,592 ),(674,570 ),(718,540 ),(795,484 ),(843,464 ),(431,706 ),(510,682 ),(567,648 ),(444,780)]
-
 #gh stuff
-gh_factions={"prosperity":ImageColor.getrgb("#d4af37"), "zenith":ImageColor.getrgb("#f8e900"),"plastics":ImageColor.getrgb("#ff69b4"),
+gh_factions={"prosperity":ImageColor.getrgb("#d4af37"), "zenith":ImageColor.getrgb("#f8e900"),"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
-#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),"demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
+#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
+# "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
@@ -166,9 +158,6 @@ async def mapUpdate(faction,square,sid):
     detroitmap = Image.open(f"map_{sid}/factionmap.png")
     legend = Image.open(f"map_{sid}/Legend_alpha.png")
     bg = Image.open(f"map_{sid}/background.png")
-    if sid=="d":
-        ImageDraw.floodfill(detroitmap, areas[square-1], (255,255,255))
-        ImageDraw.floodfill(detroitmap, areas[square-1], factions[faction])
     elif (sid=="gh") or (sid=="test"):
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], (255,255,255))
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], gh_factions[faction])
@@ -193,9 +182,7 @@ async def int_to_roman(input):
 
 #figure out which server this command runs on. Remind me to actually write server configs one day. One day. xd.
 async def sid(loc):
-    if loc==283841245975937034:
-        sid="detroit"
-    elif loc==465651565089259521:
+    if loc==465651565089259521:
         sid="gh"
     elif loc==406587085278150656:
         sid="segovia"
@@ -342,7 +329,7 @@ async def remind(ctx,time,*message):
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(ctx.message.channel.send(content,),loop,), kwargs={})
     print(sPlanner.queue)
 
-@bot.command(  description="Shuts the bot down. Owner only.",hidden=True)
+@bot.command(description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
     if ctx.message.author.id not in owner:
         await ctx.send("No. Fuck off.") 
@@ -1154,8 +1141,6 @@ async def roll(ctx,formula="3d20+4",*comment):
             comment=comment2
         formula="3d20+4"
     loc=ctx.message.guild.id
-    if (loc==283841245975937034) and (formula=="3d20+4"):
-        formula="3d20+6"
     if "d" in formula.casefold():
         d_pattern=re.compile("(d|D)(\d)*")
         d_match=d_pattern.search(formula)
