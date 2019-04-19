@@ -278,12 +278,7 @@ async def on_member_remove(member):
     server=await sid(member.guild.id)
     if (server=="gh") or (server=="test"):
         await own.send(f"{member.name} left {member.guild.name}")
-        
-#@bot.event
-#async def on_command_error(error,ctx):
-#    print(error)
-#    logger.warning(f"{error} {traceback.format_exc()}") #logs the error traceback.format_exc()
-#    #await bot.send_message(ctx.message.channel,content="You fucked up.") #send the message to the channel
+
     
 @bot.command(  description="Makes the bot leave the server.",hidden=True)
 async def order66(ctx):
@@ -334,9 +329,7 @@ async def remind(ctx,time,*message):
             timer=timer+time
     await ctx.message.add_reaction('\N{Timer Clock}')
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
-    #coro=bot.send_message(ctx.message.channel,content)
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(ctx.message.channel.send(content,),loop,), kwargs={})
-    print(sPlanner.queue)
 
 @bot.command(description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
@@ -382,7 +375,7 @@ async def announce(ctx,*message:str):
         await ctx.send(f"{i.name} {i.system_channel} {i.member_count}")
         targets.append(i.system_channel) 
     for i in targets:
-        #await i.send_message(" ".join(message))
+        #await i.send(" ".join(message))
         return
             
     
@@ -1619,7 +1612,6 @@ async def update(ctx,cape, opponent, outcome,inv=False):
         #print("smol delta")
         while (f(a-k*tau)<0):
             k+=1
-            print(k)
         b=a-k*tau  
     else:
         print("ERROR in volatility update")
@@ -1804,7 +1796,7 @@ async def income(ctx,cape, amount):
     
 
 async def account_decay():
-        
+        print("starting account decay")
         #trying a dirty fix for the reminders issue.
         reminders=[]
         with open(f"reminders.txt",mode="w+") as f:
@@ -1813,25 +1805,28 @@ async def account_decay():
             queue=sPlanner.queue
             for i in queue:
                 reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
-        json.dump(reminders,f)
+            print(f"{reminders}")
+            json.dump(reminders,f)
 
-
-
+        print("reminders done")
         locs=[465651565089259521,457290411698814980]
         decay=0.9**(1/7) #10% decay per week
         #gh loc="465651565089259521"
         #vanwiki loc="434729592352276480"
         #LA loc = 457290411698814980
         channel = bot.get_channel(478240151987027978) # channel ID goes here
-        LA_channel = bot.get_channel(457640092240969730)
+        LA_channel = bot.get_channel(457640092240969730) #la battle ooc
+        #test_channel=bot.get_channel(435874236297379861) #nest test-dev
         #GH 478240151987027978
         #vanwiki 435874236297379861
         last_updated=[]
         for loc in locs:
+            print(f"{loc}")
             if os.path.isfile(f"decay{loc}.txt"):
                 with open(f"decay{loc}.txt",mode="r+") as f:
                     last_updated = json.load(f)
                     if last_updated[0]-time.time()<-60*60*24:
+                        print("decaying...")
                         if os.path.isfile(f"cash{loc}.txt"):
                             with open(f"cash{loc}.txt",mode="r+") as g:
                                 accounts = json.load(g)
@@ -1845,11 +1840,11 @@ async def account_decay():
                                     wealth+=i[1]
                                 json.dump(accounts,g)
                             if loc==465651565089259521:
-                                await channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                                await channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                             if loc==457290411698814980:
-                                await LA_channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                                await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                         else:
-                            channel.send_message("No accounts on file.")
+                            channel.send("No accounts on file.")
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
@@ -1896,9 +1891,9 @@ async def rank_decay():
                                     avg_rank+=i[1]
                                     avg_rd+=i[2]
                                 json.dump(ranks,g)
-                            await channel.send_message(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
+                            await channel.send(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
                         else:
-                            channel.send_message("No ranks existing!")
+                            channel.send("No ranks existing!")
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
