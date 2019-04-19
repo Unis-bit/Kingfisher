@@ -1796,68 +1796,71 @@ async def income(ctx,cape, amount):
     
 
 async def account_decay():
-        print("starting account decay")
-        #trying a dirty fix for the reminders issue.
-        reminders=[]
-        with open(f"reminders.txt",mode="w+") as f:
-            f.seek(0)
-            f.truncate()
-            queue=sPlanner.queue
-            for i in queue:
-                reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
-            print(f"{reminders}")
-            json.dump(reminders,f)
+        while True:
+            print("starting account decay")
+            #trying a dirty fix for the reminders issue.
+            reminders=[]
+            with open(f"reminders.txt",mode="w+") as f:
+                f.seek(0)
+                f.truncate()
+                queue=sPlanner.queue
+                for i in queue:
+                    reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
+                print(f"{reminders}")
+                json.dump(reminders,f)
 
-        print("reminders done")
-        locs=[465651565089259521,457290411698814980]
-        decay=0.9**(1/7) #10% decay per week
-        #gh loc="465651565089259521"
-        #vanwiki loc="434729592352276480"
-        #LA loc = 457290411698814980
-        channel = bot.get_channel(478240151987027978) # channel ID goes here
-        LA_channel = bot.get_channel(457640092240969730) #la battle ooc
-        #test_channel=bot.get_channel(435874236297379861) #nest test-dev
-        #GH 478240151987027978
-        #vanwiki 435874236297379861
-        last_updated=[]
-        for loc in locs:
-            print(f"{loc}")
-            if os.path.isfile(f"decay{loc}.txt"):
-                with open(f"decay{loc}.txt",mode="r+") as f:
-                    last_updated = json.load(f)
-                    if last_updated[0]-time.time()<-60*60*24:
-                        print("decaying...")
-                        if os.path.isfile(f"cash{loc}.txt"):
-                            with open(f"cash{loc}.txt",mode="r+") as g:
-                                accounts = json.load(g)
-                                g.seek(0)
-                                g.truncate()
-                                wealth=0
-                                for i in accounts:
-                                    if loc==465651565089259521:
-                                        i[1]=round(i[1]*decay)
-                                    i[1]=i[1]+round((i[2]/7))
-                                    wealth+=i[1]
-                                json.dump(accounts,g)
-                            if loc==465651565089259521:
-                                await channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
-                            if loc==457290411698814980:
-                                await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
-                        else:
-                            channel.send("No accounts on file.")
+            print("reminders done")
+            locs=[465651565089259521,457290411698814980]
+            decay=0.9**(1/7) #10% decay per week
+            #gh loc="465651565089259521"
+            #vanwiki loc="434729592352276480"
+            #LA loc = 457290411698814980
+            channel = bot.get_channel(478240151987027978) # channel ID goes here
+            LA_channel = bot.get_channel(457640092240969730) #la battle ooc
+            #test_channel=bot.get_channel(435874236297379861) #nest test-dev
+            #GH 478240151987027978
+            #vanwiki 435874236297379861
+            last_updated=[]
+            for loc in locs:
+                print(f"{loc}")
+                if os.path.isfile(f"decay{loc}.txt"):
+                    with open(f"decay{loc}.txt",mode="r+") as f:
+                        last_updated = json.load(f)
+                        print(str(last_updated))
+                        print(str(time.time()))
+                        if last_updated[0]-time.time()<-60*60*24:
+                            print("decaying...")
+                            if os.path.isfile(f"cash{loc}.txt"):
+                                with open(f"cash{loc}.txt",mode="r+") as g:
+                                    accounts = json.load(g)
+                                    g.seek(0)
+                                    g.truncate()
+                                    wealth=0
+                                    for i in accounts:
+                                        if loc==465651565089259521:
+                                            i[1]=round(i[1]*decay)
+                                        i[1]=i[1]+round((i[2]/7))
+                                        wealth+=i[1]
+                                    json.dump(accounts,g)
+                                if loc==465651565089259521:
+                                    await channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                                if loc==457290411698814980:
+                                    await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            else:
+                                channel.send("No accounts on file.")
+                            f.seek(0)
+                            f.truncate()
+                            last_updated=[]
+                            last_updated.append(time.time())
+                            json.dump(last_updated,f)
+                else:
+                    with open(f"decay{loc}.txt",mode="w+") as f:
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
                         last_updated.append(time.time())
                         json.dump(last_updated,f)
-            else:
-                with open(f"decay{loc}.txt",mode="w+") as f:
-                    f.seek(0)
-                    f.truncate()
-                    last_updated=[]
-                    last_updated.append(time.time())
-                    json.dump(last_updated,f)
-            print("cash updated")
+                print("cash updated")
             await asyncio.sleep(60*60*3) # task runs every 3 hours
         
 
