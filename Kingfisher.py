@@ -126,20 +126,6 @@ async def on_connect():
     b_task=bot.loop.create_task(account_decay())
     b_task2=bot.loop.create_task(rank_decay())
     
-    #resume scheduled reminders
-    loop = asyncio.get_event_loop()
-    with open(f"reminders.txt",mode="r+") as f:
-        reminders = json.load(f)
-        for i in reminders:
-            timer=i['time']
-            #print(time.time()-i['time'])
-            content=i['content']
-            destination=bot.get_channel(i['destination'])
-            print(content)
-            print(destination.name)
-            sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
-    #end resume
-
     #roll macros
     global macros
     with open(f"roll_macros.txt",mode="r") as f:
@@ -154,6 +140,21 @@ async def on_ready():
     print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
     print('--------')
     print('Ready!')
+
+    #resume scheduled reminders
+    if sPlanner.empty():
+        loop = asyncio.get_event_loop()
+        with open(f"reminders.txt",mode="r+") as f:
+            reminders = json.load(f)
+            for i in reminders:
+                timer=i['time']
+                #print(time.time()-i['time'])
+                content=i['content']
+                destination=bot.get_channel(i['destination'])
+                print(content)
+                print(destination.name)
+                sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
+        #end resume
     
 
 ###Functions
