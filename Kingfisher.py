@@ -377,8 +377,9 @@ async def qping(ctx,msg):
             message=await i.fetch_message(int(msg))
         except:
             pass
+            #print(f"{i.name} did not find message")
     
-    #message = await ctx.guild.fetch_message(int(msg))
+    #message = await ctx.channel.fetch_message(int(msg))
     pinglist=""
     for i in message.reactions:
         async for user in i.users():
