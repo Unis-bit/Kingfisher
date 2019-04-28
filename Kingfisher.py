@@ -372,7 +372,13 @@ async def diehard(ctx):
 
 @bot.command(description="Ping people who reacted to a specific message.")
 async def qping(ctx,msg):
-    message = await ctx.fetch_message(int(msg))
+    for i in ctx.guild.channels:
+        try:
+            message=await i.fetch_message(int(msg))
+        except:
+            pass
+    
+    #message = await ctx.guild.fetch_message(int(msg))
     pinglist=""
     for i in message.reactions:
         async for user in i.users():
