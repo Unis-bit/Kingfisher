@@ -33,10 +33,14 @@ version="0.2 Rewrite"
 
 
 #TODO: add https://cdn.discordapp.com/attachments/476482380123602946/561997332212875266/lbj5xp1y2hp21.png style colour wheel for new role colour suggestions!
-
+#TODO: add questping
+#TODO: add self tagging
+#TODO: add round tracker
+#TODO: ranking rework
+#TODO: add server configuration
 
 #gh stuff
-gh_factions={"stronghold":ImageColor.getrgb("#7498b4"), "safeguard":ImageColor.getrgb("#8f34e2"),"royals":ImageColor.getrgb("#ff69b4"),
+gh_factions={"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4"), "safeguard":ImageColor.getrgb("#8f34e2"),"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
@@ -113,16 +117,10 @@ bot = Bot(description=f"Thinkerbot version {version}", command_prefix=">", pm_he
 # This is what happens everytime the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
 # Do not mess with it because the bot can break, if you wish to do so, please consult me or someone trusted.
 @bot.event
-async def on_ready():
-    print('Logged in as '+bot.user.name+' (ID:'+str(bot.user.id)+') | Connected to '+str(len(bot.guilds))+' servers | Connected to '+str(len(set(bot.get_all_members())))+' users')
-    print('--------')
-    print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
-    print('--------')
-    print('Use this link to invite {}:'.format(bot.user.name))
-    print('https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=8'.format(bot.user.id))
-    print('--------')
-    print('running...')
+async def on_connect():
+    print("connected!")
     await bot.change_presence(activity=discord.Game(name='>help | >nest'))
+    
     global b_task
     global b_task2
     b_task=bot.loop.create_task(account_decay())
@@ -141,13 +139,22 @@ async def on_ready():
             print(destination.name)
             sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
     #end resume
-    
+
     #roll macros
     global macros
     with open(f"roll_macros.txt",mode="r") as f:
         macros = json.load(f)
     return 
 
+@bot.event
+async def on_ready():
+    print('--------')
+    print('Logged in as '+bot.user.name+' (ID:'+str(bot.user.id)+') | Connected to '+str(len(bot.guilds))+' servers | Connected to '+str(len(set(bot.get_all_members())))+' users')
+    print('--------')
+    print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
+    print('--------')
+    print('Ready!')
+    
 
 ###Functions
 #to add new factions
@@ -465,7 +472,7 @@ async def vial(ctx, avial=None):
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await ctx.send(embed=embed)
 
-@bot.command(  description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
+@bot.command(  description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Use *>perk start* to roll your starting perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
@@ -475,6 +482,7 @@ async def perk(ctx, category=None):
     #5 flaw power
     typus_name=[None,None,"Perk Life","Perk Power","Flaw Life","Flaw Power"]
     typus_colour=[None,None,discord.Colour(0xB6D7A8),discord.Colour(0x93C47D),discord.Colour(0xEA9999),discord.Colour(0xE06666)]
+    
     if ctx.invoked_with.casefold()=="perk".casefold():
         #perk is column 2 and 3
         typus=typus+3
@@ -483,6 +491,7 @@ async def perk(ctx, category=None):
         typus=typus+5
     elif ctx.invoked_with.casefold()=="luck".casefold():
         category="luck"
+    
     if (category==None) or (category=="power"):
         category="power" #we default to power perks
     elif category=="luck":
@@ -504,6 +513,14 @@ async def perk(ctx, category=None):
             await ctx.invoke(perk,category="life")
     elif category=="life":
         typus=typus-1
+    elif category.casefold()=="start":
+        ctx.invoked_with="perk"
+        await ctx.invoke(perk,category="power")
+        await ctx.invoke(perk,category="life")
+        ctx.invoked_with="flaw"
+        await ctx.invoke(perk,category="power")
+        await ctx.invoke(perk,category="life")
+        return
     else:
         perkname=category
         for typus in range(2,6):
@@ -519,9 +536,10 @@ async def perk(ctx, category=None):
                         except discord.HTTPException:
                             await ctx.send(perksfeed[i][typus])
         return
-    out=random.randint(1,len(perksfeed)-3)
+    
+    out=random.randint(1,len(perksfeed)-3) ##roll a random perk on the table
     while perksfeed[out][typus]=="":
-        out=random.randint(1,len(perksfeed)-3)
+        out=random.randint(1,len(perksfeed)-3) #re-pick when we rolled an empty cell
     
     p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
     p_match=p_pattern.search(perksfeed[out][typus])
@@ -1797,7 +1815,7 @@ async def income(ctx,cape, amount):
 
 async def account_decay():
         while True:
-            print("starting account decay")
+
             #trying a dirty fix for the reminders issue.
             reminders=[]
             with open(f"reminders.txt",mode="w+") as f:
@@ -1806,10 +1824,9 @@ async def account_decay():
                 queue=sPlanner.queue
                 for i in queue:
                     reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
-                print(f"{reminders}")
                 json.dump(reminders,f)
 
-            print("reminders done")
+
             locs=[465651565089259521,457290411698814980]
             decay=0.9**(1/7) #10% decay per week
             #gh loc="465651565089259521"
@@ -1822,12 +1839,9 @@ async def account_decay():
             #vanwiki 435874236297379861
             last_updated=[]
             for loc in locs:
-                print(f"{loc}")
                 if os.path.isfile(f"decay{loc}.txt"):
                     with open(f"decay{loc}.txt",mode="r+") as f:
                         last_updated = json.load(f)
-                        print(str(last_updated))
-                        print(str(time.time()))
                         if last_updated[0]-time.time()<-60*60*24:
                             print("decaying...")
                             if os.path.isfile(f"cash{loc}.txt"):
@@ -1860,7 +1874,6 @@ async def account_decay():
                         last_updated=[]
                         last_updated.append(time.time())
                         json.dump(last_updated,f)
-                print("cash updated")
             await asyncio.sleep(60*60*3) # task runs every 3 hours
         
 
