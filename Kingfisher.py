@@ -112,7 +112,7 @@ sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefun
 macros={}
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
-bot = Bot(description=f"Thinkerbot version {version}", command_prefix=">", pm_help = False, case_insensitive=True,owner_id=138340069311381505)
+bot = Bot(description=f"Thinkerbot version {version}", command_prefix=(">","<"), pm_help = False, case_insensitive=True,owner_id=138340069311381505)
 
 # This is what happens everytime the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
 # Do not mess with it because the bot can break, if you wish to do so, please consult me or someone trusted.
@@ -369,6 +369,16 @@ async def diehard(ctx):
         await ctx.send("No. Fuck off.") 
         return
     await bot.close()
+
+@bot.command(description="Ping people who reacted to a specific message.")
+async def qping(ctx,msg):
+    message = await ctx.fetch_message(int(msg))
+    pinglist=""
+    for i in message.reactions:
+        async for user in i.users():
+            pinglist=pinglist+(user.mention)+" "
+    #print(pinglist)
+    await ctx.send(f"{ctx.author.nick} questpings {pinglist}")
 
 #TODO: fix    
 @bot.command(  description="Used to send messages via Kingfisher to all servers.",hidden=True)
