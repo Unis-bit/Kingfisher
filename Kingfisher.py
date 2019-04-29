@@ -114,7 +114,7 @@ macros={}
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
 bot = Bot(description=f"Thinkerbot version {version}", command_prefix=(">","<"), pm_help = False, case_insensitive=True,owner_id=138340069311381505)
 
-# This is what happens everytime the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
+# This is what happens every time the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
 # Do not mess with it because the bot can break, if you wish to do so, please consult me or someone trusted.
 @bot.event
 async def on_connect():
@@ -161,17 +161,24 @@ async def on_ready():
 #to add new factions
 #add new faction colour
 #add faction to legend via gimp
+#requires PIL 5.1.0 for some godforsaken reason
 async def mapUpdate(faction,square,sid):
-
     #detroitmap = Image.open('borders_white.png')
     detroitmap = Image.open(f"map_{sid}/factionmap.png")
     legend = Image.open(f"map_{sid}/Legend_alpha.png")
     bg = Image.open(f"map_{sid}/background.png")
+    detroitmap.show()
+    #legend.show()
+    #bg.show()
+
     if (sid=="gh") or (sid=="test"):
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], (255,255,255))
+        detroitmap.show()
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], gh_factions[faction])
+        detroitmap.show()
+    
     detroitmap.save(f"map_{sid}/factionmap.png")
-    detroitmap =Image.alpha_composite(detroitmap,legend)
+    detroitmap = Image.alpha_composite(detroitmap,legend)
     detroitmap = Image.composite(detroitmap, bg, detroitmap)
     detroitmap.save(f"map_{sid}/map.png") #output
     
@@ -639,10 +646,8 @@ async def _map(ctx):
 
 @bot.command(  description="Use this command to claim squares on the map. Faction name needs to be spelled right. Use >claim to see the current map. Use >claim factions to see available factions")
 async def claim(ctx,faction = None,square:int = None):
-    loc=ctx.message.guild.id #283841245975937034 detroit, 465651565089259521 GH
-    if loc==283841245975937034:
-        sid="d"
-    elif loc==465651565089259521:
+    loc=ctx.message.guild.id  #465651565089259521 GH
+    if loc==465651565089259521:
         sid="gh"
     else:
         sid="test"
@@ -650,6 +655,7 @@ async def claim(ctx,faction = None,square:int = None):
         #await bot.send_message(discord.User(id=owner[0]),f"Claiming in {ctx.message.channel}: {ctx.message.author.name}")
         await ctx.send(f"Can only claim in #faction-actions!")
         return
+    
     cacher=random.randint(1, 100000000000)
     if faction=="factions":
         if sid=="gh":
@@ -658,14 +664,15 @@ async def claim(ctx,faction = None,square:int = None):
         elif sid=="test":
             await ctx.send(", ".join(list(gh_factions.keys())))
             return
-    if faction == None and square == None:
+    elif faction == None and square == None:
         await ctx.send(f"https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
         return
-    if faction != None and square == None:
+    elif faction != None and square == None:
         await ctx.send("Correct format: >claim Faction Square")
     try:
         await mapUpdate(faction.casefold(),square,sid)
     except (KeyError,IndexError):
+        print("error!")
         await ctx.message.add_reaction("❌")
         return
     await ctx.send(f"Map updated. https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
