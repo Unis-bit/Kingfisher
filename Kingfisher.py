@@ -1161,7 +1161,10 @@ async def show(ctx,title=None,user=None):
 #dice rolling.
 #TODO: independent dice
 @bot.command( description="See >tag roll for help",aliases=["r"])
-async def roll(ctx,formula="3d20+4",*comment):
+async def roll(ctx,formula="default",*comment):
+    loc=ctx.message.guild.id
+    s_id = await sid(loc)
+    
     if formula[0]=="$":
         user=str(ctx.message.author.id)
         if formula in macros[user]:
@@ -1173,8 +1176,9 @@ async def roll(ctx,formula="3d20+4",*comment):
                     await ctx.invoke(roll,formula=i)
         return
     formula_in=formula
-    #print(comment)
-    #print(type(comment))
+    
+    
+
     if comment==():
         comment=""
     if formula[0]=="#":
@@ -1183,8 +1187,13 @@ async def roll(ctx,formula="3d20+4",*comment):
             comment=comment2+comment
         else:
             comment=comment2
+        formula="default"
+
+    if (s_id=="portland") and (formula=="default"):
+        formula="1d6"
+    elif formula=="default":
         formula="3d20+4"
-    loc=ctx.message.guild.id
+    
     if "d" in formula.casefold():
         d_pattern=re.compile("(d|D)(\d)*")
         d_match=d_pattern.search(formula)
@@ -1198,7 +1207,10 @@ async def roll(ctx,formula="3d20+4",*comment):
             dice=10
             keep=True
         else:
-            dice=20
+            if (s_id=="portland"):
+                dice=6
+            else:
+                dice=20
             keep=True
     #print(f"dice: {dice}")
     
@@ -1207,20 +1219,14 @@ async def roll(ctx,formula="3d20+4",*comment):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
             mod_match=mod_pattern.search(formula)
             modifier=int(mod_match.group()[1:]) 
-            if loc==283841245975937034:
-                modifier=6+modifier
-            else:
-                modifier=4+modifier
+            modifier=4+modifier
         else:
             mod_pattern=re.compile("(\+|\-)+(\d)*")
             mod_match=mod_pattern.search(formula)
             modifier=int(mod_match.group())
     else:
         if dice==20:
-            if loc==283841245975937034:
-                modifier=6
-            else:
-                modifier=4
+            modifier=4
         else:
             modifier=0
     #print(f"modifier: {modifier}")
