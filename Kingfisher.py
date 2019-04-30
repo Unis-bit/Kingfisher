@@ -58,7 +58,8 @@ gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(26
 (229.3333333,499.3333333),(190,484.6666667),(148,460),(174.6666667,509.3333333),(190.6666667,545.3333333),(278,546.6666667),(331.3333333,524),(380,553.3333333),
 (422.6666667,525.3333333),(455.3333333,512.6666667),(498,525.3333333)]
 
-typ_colours={"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403}
+typ_colours={"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403,
+                "Armor":0x565759,"Engine":0x565759,"Wheel":0x565759,"System":0x565759,"Structural":0x565759}
 muted_usr=[]
 
 
@@ -86,12 +87,12 @@ gc = gspread.authorize(credentials)
 
 feed=[[],[],[]]
 #kingfisher reference doc
-RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
-sheet = RefSheet.worksheet("Wounds")
+RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU') #kf reference doc
+sheet = RefSheet.worksheet("Wounds") #wd20
 feed[0] = sheet.get_all_values()
-sheet_SD=RefSheet.worksheet("Wounds_SD")
+sheet_SD=RefSheet.worksheet("Wounds_SD") #skitterdice
 feed[1] = sheet_SD.get_all_values()
-sheet_WD=RefSheet.worksheet("Wounds_WD")
+sheet_WD=RefSheet.worksheet("Wounds_WD") #original weaverdice
 feed[2] = sheet_WD.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
@@ -103,7 +104,7 @@ triggerSheet = RefSheet.worksheet("Triggers")
 triggerfeed = triggerSheet.get_all_values()
 
 #vials
-VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg") #arcan's vial doc
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
 sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefunc=time.monotonic, delayfunc=time.sleep)
@@ -148,11 +149,8 @@ async def on_ready():
             reminders = json.load(f)
             for i in reminders:
                 timer=i['time']
-                #print(time.time()-i['time'])
                 content=i['content']
                 destination=bot.get_channel(i['destination'])
-                print(content)
-                print(destination.name)
                 sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
         #end resume
     
@@ -161,27 +159,22 @@ async def on_ready():
 #to add new factions
 #add new faction colour
 #add faction to legend via gimp
-#requires PIL 5.1.0 for some godforsaken reason
+#requires PIL 5.1.0 for some godforsaken reason b/c of floodfill
 async def mapUpdate(faction,square,sid):
-    #detroitmap = Image.open('borders_white.png')
     detroitmap = Image.open(f"map_{sid}/factionmap.png")
     legend = Image.open(f"map_{sid}/Legend_alpha.png")
-    bg = Image.open(f"map_{sid}/background.png")
-    detroitmap.show()
-    #legend.show()
-    #bg.show()
+    bg = Image.open(f"map_{sid}/background.png") #just plain white to make it visible against discord BG
 
     if (sid=="gh") or (sid=="test"):
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], (255,255,255))
-        detroitmap.show()
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], gh_factions[faction])
-        detroitmap.show()
     
-    detroitmap.save(f"map_{sid}/factionmap.png")
+    detroitmap.save(f"map_{sid}/factionmap.png") #only the coloured squares
     detroitmap = Image.alpha_composite(detroitmap,legend)
     detroitmap = Image.composite(detroitmap, bg, detroitmap)
     detroitmap.save(f"map_{sid}/map.png") #output
-    
+
+#used to display rankings    
 async def int_to_roman(input):
    if type(input) != type(1):
       raise TypeError(f"expected integer, got {type(input)}")
@@ -203,7 +196,7 @@ async def sid(loc):
     elif loc==406587085278150656:
         sid="segovia"
     elif loc==434729592352276480:
-        sid="test"
+        sid="test" #aka nest
     elif loc==457290411698814980:
         sid="la"
     elif loc==521547663641018378:
@@ -216,7 +209,7 @@ async def sid(loc):
         sid="undefined"
     return sid
 
-#Deals with special wounds that require more interaction. Most common used to roll the effects chains for critical wounds.
+#Deals with special wounds that require more interaction. Most commonly used to roll the effects chains for critical wounds.
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
 async def specialWounds(bot,ctx,case,f):
     ctx.invoked_with="wound"
@@ -957,9 +950,9 @@ async def toggle(ctx, req_role="Active"):
            
     
 #Rolls wounds off of the Weaverdice wound table.
-@bot.command( aliases=["bash","pierce","cut","freeze","shock","rend","burn","poison"],
+@bot.command( aliases=["bash","pierce","cut","freeze","shock","rend","burn", "poison","armor","engine","wheel","system","structural"],
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
-                 " Use >wound 'Hit Vitals' to find specfic wounds.")
+                 " Use >wound 'Hit Vitals' to find specific wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     loc=await sid(ctx.message.guild.id)
     #0 is wd20, 1 is skitterdice, 2 is original wd
@@ -973,16 +966,20 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         f=0
     else:
         f=0 #default is wd20
+    
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
+    
     if severity.isdigit():
         repeats=int(severity)
         severity="Moderate"
+    
     if repeats>8:
         if ctx.message.author.id not in owner:
             await ctx.send("/metalgearchittychittybangbang")
             return
+    
     if ctx.invoked_with.casefold() == "Bash".casefold():
         typ="Bash"
     elif ctx.invoked_with.casefold() == "Pierce".casefold():
@@ -997,8 +994,20 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         typ="Rend"
     elif ctx.invoked_with.casefold() == "Burn".casefold():
         typ="Burn"
+    
     elif ctx.invoked_with.casefold() == "Poison".casefold():
         typ="Poison"
+    elif ctx.invoked_with.casefold() == "armor".casefold():
+        typ="Armor"
+    elif ctx.invoked_with.casefold() == "engine".casefold():
+        typ="Engine"
+    elif ctx.invoked_with.casefold() == "wheel".casefold():
+        typ="Wheel"
+    elif ctx.invoked_with.casefold() == "system".casefold():
+        typ="System"
+    elif ctx.invoked_with.casefold() == "structural".casefold():
+        typ="Structural"
+    
     if "typus" in typus: #kwarg
         typ=typus['typus']
     elif (ctx.invoked_with.casefold() == "Wound".casefold()) or (ctx.invoked_with.casefold() == "tag".casefold()):
@@ -1016,6 +1025,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     shorthand=re.compile("\d[cml]")
     sm=shorthand.findall(severity)
     #what if nothing is found?
+    
     if len(sm)!=0:
         for i in range(0,len(sm)):
             repeatlist.append(int(sm[i][0]))
@@ -1024,6 +1034,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         repeatlist.append(repeats)
         severitylist.append(severity)
         sm=["def"]
+    
     for j in range(0,len(sm)):
         severity= await severity_short(severitylist[j].casefold())
         exclusive=False
