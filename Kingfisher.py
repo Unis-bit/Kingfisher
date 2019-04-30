@@ -210,6 +210,8 @@ async def sid(loc):
         sid="autumn lane"
     elif loc==343748202379608065:
         sid="gaming_inc"
+    elif loc==570300070252249089:
+        sid="portland"
     else:
         sid="undefined"
     return sid
@@ -965,7 +967,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         f=0
     elif loc=="detroit":
         f=1 #detroit uses skitterdice
-    elif loc=="la" or loc=="gaming_inc" or loc=="autumn lane":
+    elif loc=="la" or loc=="gaming_inc" or loc=="autumn lane" or loc=="portland":
         f=2 
     elif loc=="test":
         f=0
