@@ -938,7 +938,7 @@ async def toggle(ctx, req_role="Active"):
         role = discord.utils.get(user.guild.roles, name="GOLD")
         opprole= discord.utils.get(user.guild.roles, name="RED")
         if role==None:
-            await ctx.send("No DEEP role defined.")
+            await ctx.send("No GOLD role defined.")
         if opprole in user.roles:
             await ctx.send("Oy! No peeking, you cheeky fuck!")
             return
