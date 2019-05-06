@@ -40,13 +40,13 @@ version="0.2 Rewrite"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions={"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4"), "safeguard":ImageColor.getrgb("#8f34e2"),"royals":ImageColor.getrgb("#ff69b4"),
+gh_factions={"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
 # "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
-#"prosperity":ImageColor.getrgb("#d4af37")
+#"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
 (473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
@@ -933,6 +933,22 @@ async def toggle(ctx, req_role="Active"):
             await user.add_roles( role)
             await ctx.message.add_reaction("🌃")
             await ctx.send("To boldly go where no man has gone before.")
+
+    elif req_role.casefold()=="GOLD".casefold():
+        role = discord.utils.get(user.guild.roles, name="GOLD")
+        opprole= discord.utils.get(user.guild.roles, name="RED")
+        if role==None:
+            await ctx.send("No DEEP role defined.")
+        if opprole in user.roles:
+            await ctx.send("Oy! No peeking, you cheeky fuck!")
+            return
+        if role in user.roles:
+            await user.remove_roles( role)
+            await ctx.message.add_reaction(bye_emoji)
+        else:
+            await user.add_roles( role)
+            await ctx.message.add_reaction("🦅")
+            await ctx.send("This is Gold Leader. Starting attack run.")
     
     elif req_role.casefold()=="interlude".casefold():
         role = discord.utils.get(user.guild.roles, name="Interlude")
