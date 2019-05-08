@@ -853,6 +853,7 @@ async def _time(ctx,):
 async def toggle(ctx, req_role="Active"):
     bye_emoji = discord.utils.get(bot.emojis, name='byedog')
     user = ctx.message.author
+    loc=await sid(ctx.message.guild.id)
     if req_role.casefold()=="Active".casefold():
         role = discord.utils.get(user.guild.roles, name="Active")
         if role==None:
@@ -875,7 +876,7 @@ async def toggle(ctx, req_role="Active"):
             await user.add_roles( role)
             await ctx.send("Welcome to the Smithy.")
 
-    elif req_role.casefold()=="news".casefold():
+    elif (req_role.casefold()=="news".casefold()) and (loc=="test"):
         role = discord.utils.get(user.guild.roles, name="news")
         if role==None:
             await ctx.send("No news role defined.")
@@ -961,6 +962,20 @@ async def toggle(ctx, req_role="Active"):
             await user.add_roles( role)
             await ctx.send("You can now post in #interludes. Role will be automatically revoked after an hour.")
             await asyncio.sleep(60*60*1)
+            await user.remove_roles( role)
+    
+    elif (req_role.casefold()=="news".casefold()) and (loc=="gh"):
+        role = discord.utils.get(user.guild.roles, name="News")
+        print(user.guild.roles)
+        if role==None:
+            await ctx.send("No News role defined.")
+        if role in user.roles:
+            await user.remove_roles( role)
+            await ctx.message.add_reaction(bye_emoji)
+        else:
+            await user.add_roles( role)
+            await ctx.send("You can now post in #news-board. Role will be automatically revoked after 30 minutes.")
+            await asyncio.sleep(60*30)
             await user.remove_roles( role)
             
            
