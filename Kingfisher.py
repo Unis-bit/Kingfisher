@@ -40,7 +40,7 @@ version="0.2 Rewrite"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions={"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
+gh_factions={"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
@@ -684,6 +684,9 @@ async def lysa(ctx):
 	
     await ctx.send(random.choice(phraselist))
 
+@bot.command(description="Create a copyeable link of your message.", aliases=["bm"])
+async def bookmark(ctx,):
+    await ctx.send(ctx.message.jump_url)
 
 # unsure if right 
 # '>eve' command variables inits 
@@ -1336,7 +1339,7 @@ async def roll(ctx,formula="default",*comment):
                     result.append(random.randint(1,dice))
                     loops=len(result)
                 k=k+1
-                if k>100: #save us from inifinite loops
+                if k>100: #save us from infinite loops
                     break
         result_i= [int(i) for i in result]
         
@@ -1402,7 +1405,7 @@ async def roll(ctx,formula="default",*comment):
 tag_muted=False #global
 
 #tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes. So many memes.
-@bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect"])
+@bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","t"])
 async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
     if (tag==None) or (tag.casefold()=="empty"):
