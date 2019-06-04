@@ -33,23 +33,20 @@ version="0.2 Rewrite"
 
 
 #TODO: add https://cdn.discordapp.com/attachments/476482380123602946/561997332212875266/lbj5xp1y2hp21.png style colour wheel for new role colour suggestions!
-
-
-#keys for the map updating function
-factions = { "horrorshow":(188, 0, 0), "faceless":(155, 89, 182), "forerunners":(231, 76, 60),"eclipse":(0, 126, 133), 
-"neutral":(255,255,255), "independent":(136, 0, 21), "hearth":(255, 215, 0) }
-areas = [(57,98 ),(157,106 ),(229,105),(322,103),(416,103),(526,63),(604,46),(695,48),(781,81),(886,67),(971,68),(1044,62),(66,211),(163,206),(247,203),
-(322,198),(396,198),(492,154),(636,132),(681,145),(781,129),(885,129),(955,163),(1015,163),(1065,140),(69,293),(153,293),(261,293),(355,293),(433,293),(544,243),
-(807,222),(895,215),(998,238),(1060,222),(1139,179),(165,368),(258,383),(347,401),(403,364),(500,341),(557,325),(604,293),(668,285),(759,322),(817,269),(933,293),
-(1018,313),(155,450),(268,477),(478,445),(538,413),(589,401),(658,346),(695,323),(814,334),(861,322 ),(971,373 ),(1061,371 ),(444,495 ),(557,502 ),(637,477 ),(669,417 ),
-(724,383 ),(736,483 ),(757,453 ),(818,439 ),(882,415 ),(500,622 ),(595,592 ),(674,570 ),(718,540 ),(795,484 ),(843,464 ),(431,706 ),(510,682 ),(567,648 ),(444,780)]
+#TODO: add questping
+#TODO: add self tagging
+#TODO: add round tracker
+#TODO: ranking rework
+#TODO: add server configuration
 
 #gh stuff
-gh_factions={"prosperity":ImageColor.getrgb("#d4af37"), "zenith":ImageColor.getrgb("#f8e900"),"plastics":ImageColor.getrgb("#ff69b4"),
+gh_factions={"labyrinth":ImageColor.getrgb("#bff360"), "warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
-#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),"demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
+#old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
+# "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
+#"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
 (473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
@@ -61,7 +58,8 @@ gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(26
 (229.3333333,499.3333333),(190,484.6666667),(148,460),(174.6666667,509.3333333),(190.6666667,545.3333333),(278,546.6666667),(331.3333333,524),(380,553.3333333),
 (422.6666667,525.3333333),(455.3333333,512.6666667),(498,525.3333333)]
 
-typ_colours={"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403}
+typ_colours={"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403,
+                "Armor":0x565759,"Engine":0x565759,"Wheel":0x565759,"System":0x565759,"Structural":0x565759}
 muted_usr=[]
 
 
@@ -89,12 +87,12 @@ gc = gspread.authorize(credentials)
 
 feed=[[],[],[]]
 #kingfisher reference doc
-RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
-sheet = RefSheet.worksheet("Wounds")
+RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU') #kf reference doc
+sheet = RefSheet.worksheet("Wounds") #wd20
 feed[0] = sheet.get_all_values()
-sheet_SD=RefSheet.worksheet("Wounds_SD")
+sheet_SD=RefSheet.worksheet("Wounds_SD") #skitterdice
 feed[1] = sheet_SD.get_all_values()
-sheet_WD=RefSheet.worksheet("Wounds_WD")
+sheet_WD=RefSheet.worksheet("Wounds_WD") #original weaverdice
 feed[2] = sheet_WD.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
@@ -106,7 +104,7 @@ triggerSheet = RefSheet.worksheet("Triggers")
 triggerfeed = triggerSheet.get_all_values()
 
 #vials
-VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg")
+VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg") #arcan's vial doc
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
 sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefunc=time.monotonic, delayfunc=time.sleep)
@@ -115,39 +113,19 @@ sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefun
 macros={}
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
-bot = Bot(description=f"Thinkerbot version {version}", command_prefix=">", pm_help = False, case_insensitive=True,owner_id=138340069311381505)
+bot = Bot(description=f"Thinkerbot version {version}", command_prefix=(">","<"), pm_help = False, case_insensitive=True,owner_id=138340069311381505)
 
-# This is what happens everytime the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
+# This is what happens every time the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
 # Do not mess with it because the bot can break, if you wish to do so, please consult me or someone trusted.
 @bot.event
-async def on_ready():
-    print('Logged in as '+bot.user.name+' (ID:'+str(bot.user.id)+') | Connected to '+str(len(bot.guilds))+' servers | Connected to '+str(len(set(bot.get_all_members())))+' users')
-    print('--------')
-    print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
-    print('--------')
-    print('Use this link to invite {}:'.format(bot.user.name))
-    print('https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=8'.format(bot.user.id))
-    print('--------')
-    print('running...')
+async def on_connect():
+    print("connected!")
     await bot.change_presence(activity=discord.Game(name='>help | >nest'))
+    
     global b_task
     global b_task2
     b_task=bot.loop.create_task(account_decay())
     b_task2=bot.loop.create_task(rank_decay())
-    
-    #resume scheduled reminders
-    loop = asyncio.get_event_loop()
-    with open(f"reminders.txt",mode="r+") as f:
-        reminders = json.load(f)
-        for i in reminders:
-            timer=i['time']
-            #print(time.time()-i['time'])
-            content=i['content']
-            destination=bot.get_channel(i['destination'])
-            print(content)
-            print(destination.name)
-            sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
-    #end resume
     
     #roll macros
     global macros
@@ -155,28 +133,48 @@ async def on_ready():
         macros = json.load(f)
     return 
 
+@bot.event
+async def on_ready():
+    print('--------')
+    print('Logged in as '+bot.user.name+' (ID:'+str(bot.user.id)+') | Connected to '+str(len(bot.guilds))+' servers | Connected to '+str(len(set(bot.get_all_members())))+' users')
+    print('--------')
+    print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
+    print('--------')
+    print('Ready!')
+
+    #resume scheduled reminders
+    if sPlanner.empty():
+        loop = asyncio.get_event_loop()
+        with open(f"reminders.txt",mode="r+") as f:
+            reminders = json.load(f)
+            for i in reminders:
+                timer=i['time']
+                content=i['content']
+                destination=bot.get_channel(i['destination'])
+                sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
+        #end resume
+    
 
 ###Functions
 #to add new factions
 #add new faction colour
 #add faction to legend via gimp
+#requires PIL 5.1.0 for some godforsaken reason b/c of floodfill
 async def mapUpdate(faction,square,sid):
-
-    #detroitmap = Image.open('borders_white.png')
     detroitmap = Image.open(f"map_{sid}/factionmap.png")
     legend = Image.open(f"map_{sid}/Legend_alpha.png")
-    bg = Image.open(f"map_{sid}/background.png")
-    if sid=="d":
-        ImageDraw.floodfill(detroitmap, areas[square-1], (255,255,255))
-        ImageDraw.floodfill(detroitmap, areas[square-1], factions[faction])
-    elif (sid=="gh") or (sid=="test"):
+    bg = Image.open(f"map_{sid}/background.png") #just plain white to make it visible against discord BG
+
+    if (sid=="gh") or (sid=="test"):
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], (255,255,255))
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], gh_factions[faction])
-    detroitmap.save(f"map_{sid}/factionmap.png")
-    detroitmap =Image.alpha_composite(detroitmap,legend)
+    
+    detroitmap.save(f"map_{sid}/factionmap.png") #only the coloured squares
+    detroitmap = Image.alpha_composite(detroitmap,legend)
     detroitmap = Image.composite(detroitmap, bg, detroitmap)
     detroitmap.save(f"map_{sid}/map.png") #output
-    
+
+#used to display rankings    
 async def int_to_roman(input):
    if type(input) != type(1):
       raise TypeError(f"expected integer, got {type(input)}")
@@ -193,25 +191,25 @@ async def int_to_roman(input):
 
 #figure out which server this command runs on. Remind me to actually write server configs one day. One day. xd.
 async def sid(loc):
-    if loc==283841245975937034:
-        sid="detroit"
-    elif loc==465651565089259521:
+    if loc==465651565089259521:
         sid="gh"
     elif loc==406587085278150656:
         sid="segovia"
     elif loc==434729592352276480:
-        sid="test"
+        sid="test" #aka nest
     elif loc==457290411698814980:
         sid="la"
     elif loc==521547663641018378:
         sid="autumn lane"
     elif loc==343748202379608065:
         sid="gaming_inc"
+    elif loc==570300070252249089:
+        sid="portland"
     else:
         sid="undefined"
     return sid
 
-#Deals with special wounds that require more interaction. Most common used to roll the effects chains for critical wounds.
+#Deals with special wounds that require more interaction. Most commonly used to roll the effects chains for critical wounds.
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
 async def specialWounds(bot,ctx,case,f):
     ctx.invoked_with="wound"
@@ -280,13 +278,17 @@ def mute_user(ctx):
 @bot.event
 async def on_member_join(member):
     own = bot.get_user(owner[0])
-    await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
-        
-#@bot.event
-#async def on_command_error(error,ctx):
-#    print(error)
-#    logger.warning(f"{error} {traceback.format_exc()}") #logs the error traceback.format_exc()
-#    #await bot.send_message(ctx.message.channel,content="You fucked up.") #send the message to the channel
+    server=await sid(member.guild.id)
+    if (server=="gh") or (server=="test"):
+        await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
+
+@bot.event
+async def on_member_remove(member):
+    own = bot.get_user(owner[0])
+    server=await sid(member.guild.id)
+    if (server=="gh") or (server=="test"):
+        await own.send(f"{member.name} left {member.guild.name}")
+
     
 @bot.command(  description="Makes the bot leave the server.",hidden=True)
 async def order66(ctx):
@@ -305,9 +307,9 @@ async def order67(ctx):
         return
     await ctx.send("Oh. You're actually serious about this?")
     #TODO: add confirmation
-    chans=ctx.message.guild.channels
-    for i in chans:
-        await i.delete()
+    #chans=ctx.message.guild.channels
+    #for i in chans:
+    #   await i.delete()
 
 @bot.command(  description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
 async def nest(ctx):
@@ -337,15 +339,9 @@ async def remind(ctx,time,*message):
             timer=timer+time
     await ctx.message.add_reaction('\N{Timer Clock}')
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
-    #coro=bot.send_message(ctx.message.channel,content)
     sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(ctx.message.channel.send(content,),loop,), kwargs={})
-    print(sPlanner.queue)
 
-@bot.command()
-async def remq(ctx):
-    print(sPlanner.queue)
-
-@bot.command(  description="Shuts the bot down. Owner only.",hidden=True)
+@bot.command(description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
     if ctx.message.author.id not in owner:
         await ctx.send("No. Fuck off.") 
@@ -376,6 +372,23 @@ async def diehard(ctx):
         return
     await bot.close()
 
+@bot.command(description="Ping people who reacted to a specific message.")
+async def qping(ctx,msg):
+    for i in ctx.guild.channels:
+        try:
+            message=await i.fetch_message(int(msg))
+        except:
+            pass
+            #print(f"{i.name} did not find message")
+    
+    #message = await ctx.channel.fetch_message(int(msg))
+    pinglist=""
+    for i in message.reactions:
+        async for user in i.users():
+            pinglist=pinglist+(user.mention)+" "
+    #print(pinglist)
+    await ctx.send(f"{ctx.author.nick} questpings {pinglist}")
+
 #TODO: fix    
 @bot.command(  description="Used to send messages via Kingfisher to all servers.",hidden=True)
 async def announce(ctx,*message:str):
@@ -389,7 +402,7 @@ async def announce(ctx,*message:str):
         await ctx.send(f"{i.name} {i.system_channel} {i.member_count}")
         targets.append(i.system_channel) 
     for i in targets:
-        #await i.send_message(" ".join(message))
+        #await i.send(" ".join(message))
         return
             
     
@@ -479,7 +492,7 @@ async def vial(ctx, avial=None):
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await ctx.send(embed=embed)
 
-@bot.command(  description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
+@bot.command(  description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Use *>perk start* to roll your starting perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
@@ -489,6 +502,7 @@ async def perk(ctx, category=None):
     #5 flaw power
     typus_name=[None,None,"Perk Life","Perk Power","Flaw Life","Flaw Power"]
     typus_colour=[None,None,discord.Colour(0xB6D7A8),discord.Colour(0x93C47D),discord.Colour(0xEA9999),discord.Colour(0xE06666)]
+    
     if ctx.invoked_with.casefold()=="perk".casefold():
         #perk is column 2 and 3
         typus=typus+3
@@ -497,6 +511,7 @@ async def perk(ctx, category=None):
         typus=typus+5
     elif ctx.invoked_with.casefold()=="luck".casefold():
         category="luck"
+    
     if (category==None) or (category=="power"):
         category="power" #we default to power perks
     elif category=="luck":
@@ -518,6 +533,14 @@ async def perk(ctx, category=None):
             await ctx.invoke(perk,category="life")
     elif category=="life":
         typus=typus-1
+    elif category.casefold()=="start":
+        ctx.invoked_with="perk"
+        await ctx.invoke(perk,category="power")
+        await ctx.invoke(perk,category="life")
+        ctx.invoked_with="flaw"
+        await ctx.invoke(perk,category="power")
+        await ctx.invoke(perk,category="life")
+        return
     else:
         perkname=category
         for typus in range(2,6):
@@ -533,9 +556,10 @@ async def perk(ctx, category=None):
                         except discord.HTTPException:
                             await ctx.send(perksfeed[i][typus])
         return
-    out=random.randint(1,len(perksfeed)-3)
+    
+    out=random.randint(1,len(perksfeed)-3) ##roll a random perk on the table
     while perksfeed[out][typus]=="":
-        out=random.randint(1,len(perksfeed)-3)
+        out=random.randint(1,len(perksfeed)-3) #re-pick when we rolled an empty cell
     
     p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
     p_match=p_pattern.search(perksfeed[out][typus])
@@ -543,7 +567,7 @@ async def perk(ctx, category=None):
     #dealing with banned perks
     bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard","finemmane"]
     while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
-        print("banned perk rolled")
+        print(f"banned perk rolled: {p_match.group()[:-1]}")
         out=random.randint(1,len(perksfeed)-3)
         while perksfeed[out][typus]=="":
             out=random.randint(1,len(perksfeed)-3)
@@ -617,10 +641,8 @@ async def _map(ctx):
 
 @bot.command(  description="Use this command to claim squares on the map. Faction name needs to be spelled right. Use >claim to see the current map. Use >claim factions to see available factions")
 async def claim(ctx,faction = None,square:int = None):
-    loc=ctx.message.guild.id #283841245975937034 detroit, 465651565089259521 GH
-    if loc==283841245975937034:
-        sid="d"
-    elif loc==465651565089259521:
+    loc=ctx.message.guild.id  #465651565089259521 GH
+    if loc==465651565089259521:
         sid="gh"
     else:
         sid="test"
@@ -628,28 +650,27 @@ async def claim(ctx,faction = None,square:int = None):
         #await bot.send_message(discord.User(id=owner[0]),f"Claiming in {ctx.message.channel}: {ctx.message.author.name}")
         await ctx.send(f"Can only claim in #faction-actions!")
         return
+    
     cacher=random.randint(1, 100000000000)
     if faction=="factions":
-        if sid=="d":
-            await ctx.send(", ".join(list(factions.keys())))
-            return
-        elif sid=="gh":
+        if sid=="gh":
             await ctx.send(", ".join(list(gh_factions.keys())))
             return
         elif sid=="test":
             await ctx.send(", ".join(list(gh_factions.keys())))
             return
-    if faction == None and square == None:
-        await ctx.send(f"https://vanwiki.org/kingfisher/map_{sid}/map.png?nocaching={cacher}")
+    elif faction == None and square == None:
+        await ctx.send(f"https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
         return
-    if faction != None and square == None:
+    elif faction != None and square == None:
         await ctx.send("Correct format: >claim Faction Square")
     try:
         await mapUpdate(faction.casefold(),square,sid)
     except (KeyError,IndexError):
+        print("error!")
         await ctx.message.add_reaction("❌")
         return
-    await ctx.send(f"Map updated. https://vanwiki.org/kingfisher/map_{sid}/map.png?nocaching={cacher}")
+    await ctx.send(f"Map updated. https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
     #await bot.send_file(ctx.message.channel,'Detroit_map.png')
 
 @bot.command(description="Bullying.",hidden=True)
@@ -663,6 +684,9 @@ async def lysa(ctx):
 	
     await ctx.send(random.choice(phraselist))
 
+@bot.command(description="Create a copyeable link of your message.", aliases=["bm"])
+async def bookmark(ctx,):
+    await ctx.send(ctx.message.jump_url)
 
 # unsure if right 
 # '>eve' command variables inits 
@@ -706,7 +730,7 @@ async def eve(ctx, args = 0):
 
 @bot.command(description="Forgot a simple URL? I got you.")
 async def wiki(ctx,*args):
-    await ctx.send("https://vanwiki.org/start")
+    await ctx.send("https://www.hivewiki.de/start")
 
 @bot.command( description="Link a cape's vanwiki article.")
 async def cape(ctx,*cape):
@@ -717,7 +741,7 @@ async def cape(ctx,*cape):
     guild=await sid(loc)
     if loc=="undefined":
         await ctx.message.add_reaction("❌")
-    domain=f"https://vanwiki.org/{guild}/cape/{cape}"
+    domain=f"https://www.hivewiki.de/{guild}/cape/{cape}"
     #async with aiohttp.get(domain, allow_redirects=False) as r:
     loop = asyncio.get_event_loop()
     async with aiohttp.ClientSession(loop=loop) as session:
@@ -832,6 +856,7 @@ async def _time(ctx,):
 async def toggle(ctx, req_role="Active"):
     bye_emoji = discord.utils.get(bot.emojis, name='byedog')
     user = ctx.message.author
+    loc=await sid(ctx.message.guild.id)
     if req_role.casefold()=="Active".casefold():
         role = discord.utils.get(user.guild.roles, name="Active")
         if role==None:
@@ -854,7 +879,7 @@ async def toggle(ctx, req_role="Active"):
             await user.add_roles( role)
             await ctx.send("Welcome to the Smithy.")
 
-    elif req_role.casefold()=="news".casefold():
+    elif (req_role.casefold()=="news".casefold()) and (loc=="test"):
         role = discord.utils.get(user.guild.roles, name="news")
         if role==None:
             await ctx.send("No news role defined.")
@@ -912,6 +937,22 @@ async def toggle(ctx, req_role="Active"):
             await user.add_roles( role)
             await ctx.message.add_reaction("🌃")
             await ctx.send("To boldly go where no man has gone before.")
+
+    elif req_role.casefold()=="GOLD".casefold():
+        role = discord.utils.get(user.guild.roles, name="GOLD")
+        opprole= discord.utils.get(user.guild.roles, name="RED")
+        if role==None:
+            await ctx.send("No GOLD role defined.")
+        if opprole in user.roles:
+            await ctx.send("Oy! No peeking, you cheeky fuck!")
+            return
+        if role in user.roles:
+            await user.remove_roles( role)
+            await ctx.message.add_reaction(bye_emoji)
+        else:
+            await user.add_roles( role)
+            await ctx.message.add_reaction("🦅")
+            await ctx.send("This is Gold Leader. Starting attack run.")
     
     elif req_role.casefold()=="interlude".casefold():
         role = discord.utils.get(user.guild.roles, name="Interlude")
@@ -925,13 +966,27 @@ async def toggle(ctx, req_role="Active"):
             await ctx.send("You can now post in #interludes. Role will be automatically revoked after an hour.")
             await asyncio.sleep(60*60*1)
             await user.remove_roles( role)
+    
+    elif (req_role.casefold()=="news".casefold()) and (loc=="gh"):
+        role = discord.utils.get(user.guild.roles, name="News")
+        print(user.guild.roles)
+        if role==None:
+            await ctx.send("No News role defined.")
+        if role in user.roles:
+            await user.remove_roles( role)
+            await ctx.message.add_reaction(bye_emoji)
+        else:
+            await user.add_roles( role)
+            await ctx.send("You can now post in #news-board. Role will be automatically revoked after 30 minutes.")
+            await asyncio.sleep(60*30)
+            await user.remove_roles( role)
             
            
     
 #Rolls wounds off of the Weaverdice wound table.
-@bot.command( aliases=["bash","pierce","cut","freeze","shock","rend","burn","poison"],
+@bot.command( aliases=["bash","pierce","cut","freeze","shock","rend","burn", "poison","armor","engine","wheel","system","structural"],
                 description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
-                 " Use >wound 'Hit Vitals' to find specfic wounds.")
+                 " Use >wound 'Hit Vitals' to find specific wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     loc=await sid(ctx.message.guild.id)
     #0 is wd20, 1 is skitterdice, 2 is original wd
@@ -939,22 +994,26 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         f=0
     elif loc=="detroit":
         f=1 #detroit uses skitterdice
-    elif loc=="la" or loc=="gaming_inc" or loc=="autumn lane":
+    elif loc=="la" or loc=="gaming_inc" or loc=="autumn lane" or loc=="portland":
         f=2 
     elif loc=="test":
         f=0
     else:
         f=0 #default is wd20
+    
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
+    
     if severity.isdigit():
         repeats=int(severity)
         severity="Moderate"
+    
     if repeats>8:
         if ctx.message.author.id not in owner:
             await ctx.send("/metalgearchittychittybangbang")
             return
+    
     if ctx.invoked_with.casefold() == "Bash".casefold():
         typ="Bash"
     elif ctx.invoked_with.casefold() == "Pierce".casefold():
@@ -969,8 +1028,20 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         typ="Rend"
     elif ctx.invoked_with.casefold() == "Burn".casefold():
         typ="Burn"
+    
     elif ctx.invoked_with.casefold() == "Poison".casefold():
         typ="Poison"
+    elif ctx.invoked_with.casefold() == "armor".casefold():
+        typ="Armor"
+    elif ctx.invoked_with.casefold() == "engine".casefold():
+        typ="Engine"
+    elif ctx.invoked_with.casefold() == "wheel".casefold():
+        typ="Wheel"
+    elif ctx.invoked_with.casefold() == "system".casefold():
+        typ="System"
+    elif ctx.invoked_with.casefold() == "structural".casefold():
+        typ="Structural"
+    
     if "typus" in typus: #kwarg
         typ=typus['typus']
     elif (ctx.invoked_with.casefold() == "Wound".casefold()) or (ctx.invoked_with.casefold() == "tag".casefold()):
@@ -988,6 +1059,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     shorthand=re.compile("\d[cml]")
     sm=shorthand.findall(severity)
     #what if nothing is found?
+    
     if len(sm)!=0:
         for i in range(0,len(sm)):
             repeatlist.append(int(sm[i][0]))
@@ -996,6 +1068,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         repeatlist.append(repeats)
         severitylist.append(severity)
         sm=["def"]
+    
     for j in range(0,len(sm)):
         severity= await severity_short(severitylist[j].casefold())
         exclusive=False
@@ -1125,8 +1198,6 @@ async def show(ctx,title=None,user=None):
     user=ctx.message.author.id
     user=str(user)
     macro_list=[]
-    print(user)
-    print(macros[user])
     for i in macros[user]:
         macro_list.append(f"Title: {i}, Formulas: {' '.join(macros[user][i])}\n")
     await ctx.send(f"Saved macros for {ctx.message.author.name} are:\n{''.join(macro_list)}")
@@ -1135,7 +1206,10 @@ async def show(ctx,title=None,user=None):
 #dice rolling.
 #TODO: independent dice
 @bot.command( description="See >tag roll for help",aliases=["r"])
-async def roll(ctx,formula="3d20+4",*comment):
+async def roll(ctx,formula="default",*comment):
+    loc=ctx.message.guild.id
+    s_id = await sid(loc)
+    
     if formula[0]=="$":
         user=str(ctx.message.author.id)
         if formula in macros[user]:
@@ -1147,8 +1221,9 @@ async def roll(ctx,formula="3d20+4",*comment):
                     await ctx.invoke(roll,formula=i)
         return
     formula_in=formula
-    #print(comment)
-    #print(type(comment))
+    
+    
+
     if comment==():
         comment=""
     if formula[0]=="#":
@@ -1157,10 +1232,13 @@ async def roll(ctx,formula="3d20+4",*comment):
             comment=comment2+comment
         else:
             comment=comment2
+        formula="default"
+
+    if (s_id=="portland") and (formula=="default"):
+        formula="1d6"
+    elif formula=="default":
         formula="3d20+4"
-    loc=ctx.message.guild.id
-    if (loc==283841245975937034) and (formula=="3d20+4"):
-        formula="3d20+6"
+    
     if "d" in formula.casefold():
         d_pattern=re.compile("(d|D)(\d)*")
         d_match=d_pattern.search(formula)
@@ -1174,7 +1252,10 @@ async def roll(ctx,formula="3d20+4",*comment):
             dice=10
             keep=True
         else:
-            dice=20
+            if (s_id=="portland"):
+                dice=6
+            else:
+                dice=20
             keep=True
     #print(f"dice: {dice}")
     
@@ -1183,20 +1264,14 @@ async def roll(ctx,formula="3d20+4",*comment):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
             mod_match=mod_pattern.search(formula)
             modifier=int(mod_match.group()[1:]) 
-            if loc==283841245975937034:
-                modifier=6+modifier
-            else:
-                modifier=4+modifier
+            modifier=4+modifier
         else:
             mod_pattern=re.compile("(\+|\-)+(\d)*")
             mod_match=mod_pattern.search(formula)
             modifier=int(mod_match.group())
     else:
         if dice==20:
-            if loc==283841245975937034:
-                modifier=6
-            else:
-                modifier=4
+            modifier=4
         else:
             modifier=0
     #print(f"modifier: {modifier}")
@@ -1264,7 +1339,7 @@ async def roll(ctx,formula="3d20+4",*comment):
                     result.append(random.randint(1,dice))
                     loops=len(result)
                 k=k+1
-                if k>100: #save us from inifinite loops
+                if k>100: #save us from infinite loops
                     break
         result_i= [int(i) for i in result]
         
@@ -1307,11 +1382,9 @@ async def roll(ctx,formula="3d20+4",*comment):
         #print(out_roll)
     if brief==True:
         out_saved=out_roll
-        print(out_roll)
         out_roll=[f"{requester}: "]
         brief_pattern=re.compile("\*\*-*\d+\*\*")
         brief_match=brief_pattern.findall(''.join(out_saved))
-        print(brief_match)
         for k in range(0,len(brief_match)):
             if k==len(brief_match)-1:
                 critcheck=brief_match[k].replace("*","")
@@ -1332,7 +1405,7 @@ async def roll(ctx,formula="3d20+4",*comment):
 tag_muted=False #global
 
 #tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes. So many memes.
-@bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect"])
+@bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","t"])
 async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
     if (tag==None) or (tag.casefold()=="empty"):
@@ -1635,7 +1708,6 @@ async def update(ctx,cape, opponent, outcome,inv=False):
         #print("smol delta")
         while (f(a-k*tau)<0):
             k+=1
-            print(k)
         b=a-k*tau  
     else:
         print("ERROR in volatility update")
@@ -1820,48 +1892,66 @@ async def income(ctx,cape, amount):
     
 
 async def account_decay():
-        locs=[465651565089259521,457290411698814980]
-        decay=0.9**(1/7) #10% decay per week
-        #gh loc="465651565089259521"
-        #vanwiki loc="434729592352276480"
-        #LA loc = 457290411698814980
-        channel = bot.get_channel(478240151987027978) # channel ID goes here
-        #GH 478240151987027978
-        #vanwiki 435874236297379861
-        last_updated=[]
-        for loc in locs:
-            if os.path.isfile(f"decay{loc}.txt"):
-                with open(f"decay{loc}.txt",mode="r+") as f:
-                    last_updated = json.load(f)
-                    if last_updated[0]-time.time()<-60*60*24:
-                        if os.path.isfile(f"cash{loc}.txt"):
-                            with open(f"cash{loc}.txt",mode="r+") as g:
-                                accounts = json.load(g)
-                                g.seek(0)
-                                g.truncate()
-                                wealth=0
-                                for i in accounts:
-                                    if loc==465651565089259521:
-                                        i[1]=round(i[1]*decay)
-                                    i[1]=i[1]+round((i[2]/7))
-                                    wealth+=i[1]
-                                json.dump(accounts,g)
-                            if loc==465651565089259521:
-                                await channel.send_message(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
-                        else:
-                            channel.send_message("No accounts on file.")
+        while True:
+
+            #trying a dirty fix for the reminders issue.
+            reminders=[]
+            with open(f"reminders.txt",mode="w+") as f:
+                f.seek(0)
+                f.truncate()
+                queue=sPlanner.queue
+                for i in queue:
+                    reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
+                json.dump(reminders,f)
+
+
+            locs=[465651565089259521,457290411698814980]
+            decay=0.9**(1/7) #10% decay per week
+            #gh loc="465651565089259521"
+            #vanwiki loc="434729592352276480"
+            #LA loc = 457290411698814980
+            channel = bot.get_channel(478240151987027978) # channel ID goes here
+            LA_channel = bot.get_channel(457640092240969730) #la battle ooc
+            #test_channel=bot.get_channel(435874236297379861) #nest test-dev
+            #GH 478240151987027978
+            #vanwiki 435874236297379861
+            last_updated=[]
+            for loc in locs:
+                if os.path.isfile(f"decay{loc}.txt"):
+                    with open(f"decay{loc}.txt",mode="r+") as f:
+                        last_updated = json.load(f)
+                        if last_updated[0]-time.time()<-60*60*24:
+                            print("decaying...")
+                            if os.path.isfile(f"cash{loc}.txt"):
+                                with open(f"cash{loc}.txt",mode="r+") as g:
+                                    accounts = json.load(g)
+                                    g.seek(0)
+                                    g.truncate()
+                                    wealth=0
+                                    for i in accounts:
+                                        if loc==465651565089259521:
+                                            i[1]=round(i[1]*decay)
+                                        i[1]=i[1]+round((i[2]/7))
+                                        wealth+=i[1]
+                                    json.dump(accounts,g)
+                                if loc==465651565089259521:
+                                    await channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                                if loc==457290411698814980:
+                                    await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            else:
+                                channel.send("No accounts on file.")
+                            f.seek(0)
+                            f.truncate()
+                            last_updated=[]
+                            last_updated.append(time.time())
+                            json.dump(last_updated,f)
+                else:
+                    with open(f"decay{loc}.txt",mode="w+") as f:
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
                         last_updated.append(time.time())
                         json.dump(last_updated,f)
-            else:
-                with open(f"decay{loc}.txt",mode="w+") as f:
-                    f.seek(0)
-                    f.truncate()
-                    last_updated=[]
-                    last_updated.append(time.time())
-                    json.dump(last_updated,f)
             await asyncio.sleep(60*60*3) # task runs every 3 hours
         
 
@@ -1895,9 +1985,9 @@ async def rank_decay():
                                     avg_rank+=i[1]
                                     avg_rd+=i[2]
                                 json.dump(ranks,g)
-                            await channel.send_message(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
+                            await channel.send(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
                         else:
-                            channel.send_message("No ranks existing!")
+                            channel.send("No ranks existing!")
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
