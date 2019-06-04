@@ -40,7 +40,7 @@ version="0.2 Rewrite"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions={"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
+gh_factions={"labyrinth":ImageColor.getrgb("#bff360"), "warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
 "avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
