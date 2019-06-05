@@ -704,14 +704,17 @@ async def make(ctx,title):
     await ctx.send(f"Successfully added {title} to bookmarks!")
     
 @bookmark.command(description="Add links to your bookmark.", aliases=["a"])
-async def add(ctx,title,comment):
+async def add(ctx,title,comment,url = None):
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
     for k in bm_feed:
         for i,j in k.items():
             if i=="Title" and j==title:
                 if ctx.author.id in k["Owners"]:
-                    content={"Comment":comment,"URL":ctx.message.jump_url}
+                    if url==None:
+                        content={"Comment":comment,"URL":ctx.message.jump_url}
+                    else:
+                        content={"Comment":comment,"URL":url}
                     k["Content"].append(content)
                 else:
                     await ctx.send("Not your Bookmark!")
@@ -730,7 +733,14 @@ async def show(ctx,title):
         for i,j in k.items():
             if i=="Title" and j==title:
                 embed = discord.Embed(title=title, colour=discord.Colour(0x6766b))
-                embed.set_footer(text=f"Owners: {', '.join(map(str,k['Owners']))}", icon_url=bm_icon)
+                
+                ownerstring=""
+                for o in k["Owners"]:
+                    usr=await bot.fetch_user(o)
+                    ownerstring=f"{ownerstring}, {usr.name}"
+
+                embed.set_footer(text=f"Owners: {ownerstring[1:]}", icon_url=bm_icon)
+                #embed.set_footer(text=f"Owners: {', '.join(map(str,k['Owners']))}", icon_url=bm_icon)
                 
                 #for each content, add content
                 i=1
@@ -756,7 +766,10 @@ async def owners(ctx,title,new_owner):
         yaml.dump(bm_feed,f)
     await ctx.send("Success")
     
-    
+#TODO:
+#add custom urls, remove links/owners
+#owner naming
+#feedback via emotes
 
 # unsure if right 
 # '>eve' command variables inits 
