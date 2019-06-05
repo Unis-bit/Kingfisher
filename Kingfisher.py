@@ -25,6 +25,7 @@ from discord.ext.commands import Bot
 from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
+from ruamel.yaml import YAML
 
 version="0.2 Rewrite"
 ###useful resources
@@ -681,12 +682,46 @@ async def worm(ctx,*args):
 async def lysa(ctx):
     sweat_emoji = discord.utils.get(bot.emojis, name='sweats')
     phraselist = ["oof", "Uh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
-	
     await ctx.send(random.choice(phraselist))
 
-@bot.command(description="Create a copyeable link of your message.", aliases=["bm"])
+@bot.group(description="Make a copyeable link of your message.", aliases=["bm"])
 async def bookmark(ctx,):
-    await ctx.send(ctx.message.jump_url)
+    if ctx.invoked_subcommand is None:
+        await ctx.send(ctx.message.jump_url)
+
+@bookmark.command(description="Create a bookmark to add links to.",)
+async def make(ctx,title):
+    new_bm=[{"Title":title,"Owners":ctx.author.id,"Content":[]},]
+    with open(f"bm.yaml",mode="r+") as f:
+        old_bm=yaml.load(f)
+        print(old_bm)
+        if old_bm:
+            old_bm.append(new_bm)
+            f.seek(0)
+            yaml.dump(old_bm,f)
+        else:
+            yaml.dump(new_bm,f)
+    await ctx.send(f"Successfully added {title} to bookmarks!")
+    
+@bookmark.command(description="Add links to your bookmark.", aliases=["a"])
+async def add(ctx,):
+    pass
+
+    
+
+@bookmark.command(description="Display a bookmark.", aliases=["s"])
+async def show(ctx,title):
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+    for k in bm_feed:
+        for i,j in k.items():
+            print(i)
+            print(j)
+            if j==title:
+                await ctx.send(f"Success")
+    #await ctx.send(f"Success")
+    
+    
 
 # unsure if right 
 # '>eve' command variables inits 
@@ -1410,7 +1445,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
     if (tag==None) or (tag.casefold()=="empty"):
         await ctx.message.add_reaction("❌")
-    elif tag.casefold()=="create".casefold():
+    elif tag.casefold()=="create".casefold() or tag.casefold()=="make".casefold():
         global tag_muted
         if tag_muted==True:
             await ctx.send("Disabled until you fuckers calm down.")
@@ -1577,7 +1612,7 @@ async def _help(ctx,cape=None):
     await ctx.send("To enter your cape into the database, use "">rank make halcyon"". If you finish a fight, use "">rank update luke vader win"". In this one, luke won against vader. If luke had lost, you would write "">rank update luke vader loss"". Only one person needs to do this, the other's rank is updated automatically. You can see your rating by using "">rank show halcyon"". This is still a pretty early build, so expect bugs and shit. Consider this a beta that will probably get wiped at some point.")
     
 
-@rank.command( )
+@rank.command(aliases=["create"])
 async def make(ctx,cape=None):
     loc=ctx.message.guild.id
     if cape==None:
@@ -1782,7 +1817,7 @@ async def show(ctx, cape=None):
             await ctx.send(f"Balance for {cape}: {i[1]}$. Income: {i[2]}$.")
     #print(accounts)
 
-@account.command( description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.")
+@account.command( description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.", alias="create")
 async def make(ctx,cape=None,amount=0,income=0):
     loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
@@ -2013,4 +2048,6 @@ schedthread = threading.Thread(target=timer)
 schedthread.start()
 with open("Token.txt", 'r') as f:
         token=f.read()
+yaml=YAML()
+yaml.default_flow_style=False
 bot.run(token)
