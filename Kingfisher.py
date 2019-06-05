@@ -684,19 +684,19 @@ async def lysa(ctx):
     phraselist = ["oof", "Uh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
     await ctx.send(random.choice(phraselist))
 
-@bot.group(description="Make a copyeable link of your message.", aliases=["bm"])
+
+@bot.group(description="Make a copyeable link of your message. Make, Add, Show, Owners", aliases=["bm"])
 async def bookmark(ctx,):
     if ctx.invoked_subcommand is None:
         await ctx.send(ctx.message.jump_url)
 
 @bookmark.command(description="Create a bookmark to add links to.",)
 async def make(ctx,title):
-    new_bm=[{"Title":title,"Owners":ctx.author.id,"Content":[]},]
+    new_bm=[{"Title":title,"Owners":[ctx.author.id],"Content":[]},]
     with open(f"bm.yaml",mode="r+") as f:
         old_bm=yaml.load(f)
-        print(old_bm)
         if old_bm:
-            old_bm.append(new_bm)
+            old_bm.extend(new_bm)
             f.seek(0)
             yaml.dump(old_bm,f)
         else:
@@ -704,22 +704,57 @@ async def make(ctx,title):
     await ctx.send(f"Successfully added {title} to bookmarks!")
     
 @bookmark.command(description="Add links to your bookmark.", aliases=["a"])
-async def add(ctx,):
-    pass
-
-    
-
-@bookmark.command(description="Display a bookmark.", aliases=["s"])
-async def show(ctx,title):
+async def add(ctx,title,comment):
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
     for k in bm_feed:
         for i,j in k.items():
-            print(i)
-            print(j)
-            if j==title:
-                await ctx.send(f"Success")
-    #await ctx.send(f"Success")
+            if i=="Title" and j==title:
+                if ctx.author.id in k["Owners"]:
+                    content={"Comment":comment,"URL":ctx.message.jump_url}
+                    k["Content"].append(content)
+                else:
+                    await ctx.send("Not your Bookmark!")
+    with open(f"bm.yaml",mode="r+") as f:
+        f.seek(0)
+        yaml.dump(bm_feed,f)
+    await ctx.send("Success")
+
+@bookmark.command(description="Display a bookmark.", aliases=["s"])
+async def show(ctx,title):
+    bm_icon="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/google/146/bookmark_1f516.png"
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+        print(bm_feed)
+    for k in bm_feed:
+        for i,j in k.items():
+            if i=="Title" and j==title:
+                embed = discord.Embed(title=title, colour=discord.Colour(0x6766b))
+                embed.set_footer(text=f"Owners: {', '.join(map(str,k['Owners']))}", icon_url=bm_icon)
+                
+                #for each content, add content
+                i=1
+                for c in k["Content"]:
+                    embed.add_field(name=str(i),value=f"[{c['Comment']}]({c['URL']})")
+                    i=i+1
+                await ctx.send(embed=embed)
+                return
+
+@bookmark.command(description="Add an owner to your bookmark. Needs their user ID.",)
+async def owners(ctx,title,new_owner):
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+    for k in bm_feed:
+        for i,j in k.items():
+            if i=="Title" and j==title:
+                if ctx.author.id in k["Owners"]:
+                    k["Owners"].append(int(new_owner))
+                else:
+                    await ctx.send("Not your Bookmark!")
+    with open(f"bm.yaml",mode="r+") as f:
+        f.seek(0)
+        yaml.dump(bm_feed,f)
+    await ctx.send("Success")
     
     
 
