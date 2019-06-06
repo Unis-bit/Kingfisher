@@ -688,13 +688,17 @@ async def lysa(ctx):
 #await ctx.message.add_reaction("❌")
 #await ctx.message.add_reaction("✅")
 
-@bot.group(description="""Make a copyeable link of your message. Using this without arguments simply gives you a link. 
+@bot.group(description=""" Make a copyeable link of your message. Using *link* simply gives you a link. 
                             Sub-commands are Make, Add, Remove, Show, Owners. You need to first *make* a Bookmark, which is essentially a folder you will
                             put links into via the *add* command. The add command will either create a link to your adding message, or it takes custom URLs.
-                            You can create multi-user bookmarks, too! Add your friends to collaborate on bookmarks via *owners*.""", aliases=["bm"])
+                            You can create multi-user bookmarks, too! Add your friends to collaborate onbookmarks via *owners*.""", aliases=["bm"])
 async def bookmark(ctx,):
     if ctx.invoked_subcommand is None:
-        await ctx.send(ctx.message.jump_url)
+        await ctx.send("You need to use a subcommand like >bm show, or use >help bm.")
+
+@bookmark.command(description="Gives the link of your selfsame message.",)
+async def link(ctx,title):
+    await ctx.send(ctx.message.jump_url)
 
 @bookmark.command(description="Create a Bookmark to add links to. Needs a Title to identify it with!",)
 async def make(ctx,title):
@@ -714,7 +718,9 @@ async def make(ctx,title):
 @bookmark.command(description="""Add links to your bookmark. Make sure to include the title of the bookmark you want to add it to, as well as 
                                 a short comment identify this link. If no URL is given, the link defaults to your own message. You can also use any URL. 
                                 Make sure it is formatted properly, including the http:// header!""", aliases=["a"])
-async def add(ctx,title,comment,url = None):
+async def add(ctx,title,comment=None,url = None):
+    if comment==None:
+        await ctx.send("Comment is required!")
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
     for k in bm_feed:
