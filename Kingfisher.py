@@ -685,12 +685,18 @@ async def lysa(ctx):
     await ctx.send(random.choice(phraselist))
 
 
-@bot.group(description="Make a copyeable link of your message. Make, Add, Show, Owners", aliases=["bm"])
+#await ctx.message.add_reaction("❌")
+#await ctx.message.add_reaction("✔️")
+
+@bot.group(description="""Make a copyeable link of your message. Using this without arguments simply gives you a link. 
+                            Sub-commands are Make, Add, Remove, Show, Owners. You need to first *make* a Bookmark, which is essentially a folder you will
+                            put links into via the *add* command. The add command will either create a link to your adding message, or it takes custom URLs.
+                            You can create multi-user bookmarks, too! Add your firends to collaborate on bookmarks via *owners*.""", aliases=["bm"])
 async def bookmark(ctx,):
     if ctx.invoked_subcommand is None:
         await ctx.send(ctx.message.jump_url)
 
-@bookmark.command(description="Create a bookmark to add links to.",)
+@bookmark.command(description="Create a Bookmark to add links to. Needs a Title to identify it with!",)
 async def make(ctx,title):
     new_bm=[{"Title":title,"Owners":[ctx.author.id],"Content":[]},]
     with open(f"bm.yaml",mode="r+") as f:
@@ -703,7 +709,9 @@ async def make(ctx,title):
             yaml.dump(new_bm,f)
     await ctx.send(f"Successfully added {title} to bookmarks!")
     
-@bookmark.command(description="Add links to your bookmark.", aliases=["a"])
+@bookmark.command(description="""Add links to your bookmark. Make sure to include the title of the bookmark you want to add it to, as well as 
+                                a short comment identify this link. If no URL is given, the link defaults to your own message. You can also use any URL. 
+                                Make sure it is formatted properly, including the http:// header!""", aliases=["a"])
 async def add(ctx,title,comment,url = None):
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
@@ -721,7 +729,29 @@ async def add(ctx,title,comment,url = None):
     with open(f"bm.yaml",mode="r+") as f:
         f.seek(0)
         yaml.dump(bm_feed,f)
-    await ctx.send("Success")
+    await ctx.message.add_reaction("✔️")
+
+@bookmark.command(description="Remove links from your bookmark. Use this CAREFULLY!",)
+async def remove(ctx,title,comment,):
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+    for k in bm_feed:
+        print(k)
+        if ctx.author.id in k["Owners"]:
+            if k["Title"]==title:
+                print("Title Match")
+                #k["Content"] is a (ordered set of) list containing the dict of the comment,url pairs
+                for i in k["Content"]:
+                    if i["Comment"]==comment:
+                        print("Comment Match")
+                        k["Content"].remove(i)                
+        else:
+            await ctx.send("Not your Bookmark!")
+        print(bm_feed)
+    with open(f"bm.yaml",mode="w+") as f:
+        f.seek(0)
+        yaml.dump(bm_feed,f)
+    await ctx.message.add_reaction("✔️")
 
 @bookmark.command(description="Display a bookmark.", aliases=["s"])
 async def show(ctx,title):
@@ -750,21 +780,31 @@ async def show(ctx,title):
                 await ctx.send(embed=embed)
                 return
 
-@bookmark.command(description="Add an owner to your bookmark. Needs their user ID.",)
-async def owners(ctx,title,new_owner):
+@bookmark.command(description="Add an owner to your bookmark. Needs their user ID, or their account name.",)
+async def owners(ctx,title,new_owner,remove="add"):
+    try:
+        new_owner_id=int(new_owner)
+    except ValueError:
+        try:
+            new_owner_id=ctx.guild.get_member_named(new_owner).id
+        except:
+            ctx.send("I have no idea who you're trying to add. Try using their account name or ID.")        
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
     for k in bm_feed:
         for i,j in k.items():
             if i=="Title" and j==title:
                 if ctx.author.id in k["Owners"]:
-                    k["Owners"].append(int(new_owner))
+                    if remove=="remove":
+                        k["Owners"].remove(new_owner_id)
+                    else:
+                        k["Owners"].append(new_owner_id)
                 else:
                     await ctx.send("Not your Bookmark!")
-    with open(f"bm.yaml",mode="r+") as f:
+    with open(f"bm.yaml",mode="w+") as f:
         f.seek(0)
         yaml.dump(bm_feed,f)
-    await ctx.send("Success")
+    await ctx.message.add_reaction("✔️")
     
 #TODO:
 #add custom urls, remove links/owners
