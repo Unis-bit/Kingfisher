@@ -701,15 +701,14 @@ async def make(ctx,title):
     new_bm=[{"Title":title,"Owners":[ctx.author.id],"Content":[]},]
     with open(f"bm.yaml",mode="r+") as f:
         old_bm=yaml.load(f)
-        for k in old_bm:
-            if k["Title"]==title:
-                await ctx.send(f"Title already taken!")
-                return
-            old_bm.extend(new_bm)
-            f.seek(0)
-            yaml.dump(old_bm,f)
-        else:
-            yaml.dump(new_bm,f)
+    for k in old_bm:
+        if k["Title"]==title:
+            await ctx.send(f"Title already taken!")
+            return
+    old_bm.extend(new_bm)
+    with open(f"bm.yaml",mode="w+") as f:     
+        f.seek(0)
+        yaml.dump(old_bm,f)
     await ctx.send(f"Successfully added {title} to bookmarks!")
     
 @bookmark.command(description="""Add links to your bookmark. Make sure to include the title of the bookmark you want to add it to, as well as 
@@ -729,7 +728,7 @@ async def add(ctx,title,comment,url = None):
                     k["Content"].append(content)
                 else:
                     await ctx.send("Not your Bookmark!")
-    with open(f"bm.yaml",mode="r+") as f:
+    with open(f"bm.yaml",mode="w+") as f:
         f.seek(0)
         yaml.dump(bm_feed,f)
     await ctx.message.add_reaction("✅")
