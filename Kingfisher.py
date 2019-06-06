@@ -701,7 +701,10 @@ async def make(ctx,title):
     new_bm=[{"Title":title,"Owners":[ctx.author.id],"Content":[]},]
     with open(f"bm.yaml",mode="r+") as f:
         old_bm=yaml.load(f)
-        if old_bm:
+        for k in old_bm:
+            if k["Title"]==title:
+                await ctx.send(f"Title already taken!")
+                return
             old_bm.extend(new_bm)
             f.seek(0)
             yaml.dump(old_bm,f)
@@ -731,8 +734,10 @@ async def add(ctx,title,comment,url = None):
         yaml.dump(bm_feed,f)
     await ctx.message.add_reaction("✅")
 
-@bookmark.command(description="Remove links from your bookmark. Use this CAREFULLY!",)
-async def remove(ctx,title,comment,):
+@bookmark.command(description="""Remove links from your bookmark. Use this CAREFULLY! 
+                                If you have multiple entries with the same comment, you *should* specify exactly which one should get deleted by also
+                                including the content.""",)
+async def remove(ctx,title,comment,content=False):
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
     for k in bm_feed:
@@ -741,7 +746,8 @@ async def remove(ctx,title,comment,):
                 #k["Content"] is a (ordered set of) list containing the dict of the comment,url pairs
                 for i in k["Content"]:
                     if i["Comment"]==comment:
-                        k["Content"].remove(i)                
+                        if i["Content"]==content or content==False:
+                            k["Content"].remove(i)                
         else:
             await ctx.send("Not your Bookmark!")
     with open(f"bm.yaml",mode="w+") as f:
