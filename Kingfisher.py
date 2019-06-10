@@ -270,6 +270,9 @@ async def severity_short(arg):
 def is_me(m):
     return m.author == bot.user
 
+def not_me(m):
+    return m.author != bot.user
+
 
 #global check to make sure blocked people can't mess around
 @bot.check
@@ -290,6 +293,27 @@ async def on_member_remove(member):
     if (server=="gh") or (server=="test"):
         await own.send(f"{member.name} left {member.guild.name}")
 
+@bot.event
+async def on_message(message):
+    #function for having private chats people can declare stuff into
+    #deletes the postings in one channel, then sends them to a different one
+    
+    try:
+        #checks-public 587718887936753710
+        #checks-private 587718930483773509
+
+        #test-beta 538633337191923714
+        #test-dev 435874236297379861
+        if not_me(message):
+            if message.channel.id==587718887936753710:
+                target=discord.utils.find(lambda m:m.id==587718930483773509,message.guild.channels)
+                await target.send(f"**{message.content}** sent by {message.author.name}, ID `{message.author.id}` at {message.created_at}")
+                await message.delete()
+        
+        await bot.process_commands(message)
+    
+    except:
+        await bot.process_commands(message)
     
 @bot.command(  description="Makes the bot leave the server.",hidden=True)
 async def order66(ctx):
