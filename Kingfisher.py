@@ -1525,7 +1525,7 @@ async def roll(ctx,formula="default",*comment):
         out_roll.append(")")
         if modifier>0:
             out_roll.append("+")
-        if dice==20 and highest==20:
+        if dice==highest:
             if modifier != 0:
                 out_roll.append(f"{modifier}=__**{highest+modifier}**__")
             else:
