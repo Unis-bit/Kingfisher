@@ -1667,6 +1667,26 @@ async def convert(ctx, inches):
         inch=int(inches)
     await ctx.send(f"{inches} is equal to {inch*2.54}cm")
 
+
+#init
+
+
+@bot.command( description="Turn Tracker.")
+async def init(ctx, score):
+    pass
+
+@bot.command( description="Turn Tracker.")
+async def end(ctx, force):
+    pass
+
+#trueskill
+@bot.group( )
+async def rank2(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send('Available commands: show, make, update')
+
+
+
 #TODO: Replace with trueSkill
 #GLICKO MODUlE
 #defining parameters for the glicko system
@@ -1679,7 +1699,7 @@ test="test"
 @bot.group( )
 async def rank(ctx):
     if ctx.invoked_subcommand is None:
-        await ctx.send('Available commands: show, make, update')
+        await ctx.send('Available commands: show, make, update, ladder')
         
 @rank.command( )
 async def ladder(ctx, mode="lax"):
