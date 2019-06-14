@@ -1792,7 +1792,7 @@ async def turn(ctx,number:int,*comment):
     usr=ctx.author
 
     global turn_tracker
-    
+
     comment=" ".join(comment)
     cur_round=turn_tracker[chan]["round"]
     cur_turn=turn_tracker[chan]["turn"]
