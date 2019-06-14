@@ -745,6 +745,7 @@ async def make(ctx,title):
 async def add(ctx,title,comment=None,url = None):
     if comment==None:
         await ctx.send("Comment is required!")
+        return
     with open(f"bm.yaml",mode="r") as f:
         bm_feed=yaml.load(f)
     for k in bm_feed:
@@ -758,6 +759,7 @@ async def add(ctx,title,comment=None,url = None):
                     k["Content"].append(content)
                 else:
                     await ctx.send("Not your Bookmark!")
+                    return
     with open(f"bm.yaml",mode="w+") as f:
         f.seek(0)
         yaml.dump(bm_feed,f)
@@ -1667,19 +1669,101 @@ async def convert(ctx, inches):
         inch=int(inches)
     await ctx.send(f"{inches} is equal to {inch*2.54}cm")
 
+####################
+#Turn Tracker module
+####################
+turn_tracker={}
 
-#init
+# The turn tracker allows you to keep combat flowing by automtically pinging people when it is their turn.
+# First, everyone enters their initiative score by using >init 11
+# If two people need to roll off (say both roll an 11), the winner of the rolloff should enter their initiative as 11.5
+# Once everyone has entered their score, simply use >start to get going!
+# if you have finished your turn, simply use >end
+# When your fight is done, use >clear to empty the initiative queue
 
-
-@bot.command( description="Turn Tracker.")
+@bot.command( description="The turn tracker allows you to keep combat flowing by automtically pinging people when it is their turn.")
 async def init(ctx, score):
-    pass
+    chan=ctx.channel.id
+    global turn_tracker
+    if chan in turn_tracker.keys(): 
+        a_id=ctx.author.id
+        turn_tracker[chan]["init"].update({a_id:score})
+    else:
+        turn_tracker[chan]={"init":{ctx.author.id:score},"turn":0,"round":1,"started":False}
+    #await ctx.message.add_reaction("✅")
+    #print(sorted(turn_tracker[chan]["init"].items(), key=lambda x:x[1],reverse=True))
+    #print(turn_tracker)
 
 @bot.command( description="Turn Tracker.")
-async def end(ctx, force):
-    pass
+async def start(ctx):
+    chan=ctx.channel.id
+    global turn_tracker
+    turn_tracker[chan]["order"]=sorted(turn_tracker[chan]["init"].items(), key=operator.itemgetter(1),reverse=True)
+    turn_tracker[chan]["started"]=True
+    print(turn_tracker[chan]["order"])
+    cur_turn=turn_tracker[chan]["turn"]
+    await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
+    turn_tracker[chan].update({"turn":cur_turn+1})
+    print("first turn")
 
-#trueskill
+
+@bot.command( description="Turn Tracker.")
+async def end(ctx, force=False):
+    chan=ctx.channel.id
+    cur_turn=turn_tracker[chan]["turn"]
+    cur_round=turn_tracker[chan]["round"]
+    turn_tracker[chan].update({"turn":cur_turn+1})
+    if turn_tracker[chan]["turn"]==len(turn_tracker[chan]["order"]):
+        turn_tracker[chan].update({"round":cur_round+1})
+        await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
+        turn_tracker[chan].update({"turn":0})
+    await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
+    print(turn_tracker[chan])
+
+@bot.command( description="Turn Tracker.")
+async def show(ctx):
+    chan=ctx.channel.id
+    
+    init_list=[]
+    init_str=""
+    
+    order_list=[]
+    order_str=""
+
+    for i,j in turn_tracker[chan]["init"].items():
+        print(i)
+        init_list.append((i,j))
+    print(init_list)
+    init_list=list(enumerate(init_list,1))
+    init_str=[f"Inititiave table for {ctx.message.channel.name}"+os.linesep]
+    for i in init_list:
+        init_str+=((f"**{i[0]}**. {i[1][0]}  *{i[1][1]}*"+os.linesep))
+    init_str=''.join(init_str)
+    await ctx.send(init_str)
+
+    for i,j in turn_tracker[chan]["order"].items():
+        print(i)
+        order_list.append((i,j))
+    print(order_list)
+    order_list=list(enumerate(order_list,1))
+    order_str=[f"Current combast order in {ctx.message.channel.name}"+os.linesep]
+    for i in order_list:
+        order_str+=((f"**{i[0]}**. {i[1][0]}  *{i[1][1]}*"+os.linesep))
+    order_str=''.join(order_str)
+    await ctx.send(order_str)
+
+    #init_list+f"{i}"+os.linesep
+    
+
+@bot.command( description="Turn Tracker.")
+async def clear(ctx,):
+    chan=ctx.channel.id
+    global turn_tracker
+    del turn_tracker[chan]
+    await ctx.send("gg")
+
+#################
+#New Skill module
 @bot.group( )
 async def rank2(ctx):
     if ctx.invoked_subcommand is None:
