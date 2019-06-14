@@ -712,7 +712,7 @@ async def lysa(ctx):
 #await ctx.message.add_reaction("❌")
 #await ctx.message.add_reaction("✅")
 
-@bot.group(description=""" Make a copyeable link of your message. Using *link* simply gives you a link. 
+@bot.group(description=""" Make a copyable link of your message. Using *link* simply gives you a link. 
                             Sub-commands are Make, Add, Remove, Show, Owners. You need to first *make* a Bookmark, which is essentially a folder you will
                             put links into via the *add* command. The add command will either create a link to your adding message, or it takes custom URLs.
                             You can create multi-user bookmarks, too! Add your friends to collaborate onbookmarks via *owners*.""", aliases=["bm"])
@@ -1681,8 +1681,16 @@ turn_tracker={}
 # if you have finished your turn, simply use >end
 # When your fight is done, use >clear to empty the initiative queue
 
-@bot.command( description="The turn tracker allows you to keep combat flowing by automtically pinging people when it is their turn.")
-async def init(ctx, score):
+@bot.command( description="""The turn tracker allows you to keep combat flowing by automtically pinging people when it is their turn. 
+                    First, everyone enters their initiative score by using >init 11 etc. 
+                    If two people need to roll off (say both roll an 11), the winner of the rolloff should enter their initiative as 11.5
+                    Once everyone has entered their score, simply use >start to get going!
+                    if you have finished your turn, simply use >end
+                    When your fight is done, use >clear to empty the initiative queue
+
+                    This also supports re-shuffling init in the middle of a fight. 
+                    """)
+async def init(ctx, score:int):
     chan=ctx.channel.id
     global turn_tracker
     if chan in turn_tracker.keys(): 
@@ -1712,16 +1720,26 @@ async def end(ctx, force=False):
     chan=ctx.channel.id
     cur_turn=turn_tracker[chan]["turn"]
     cur_round=turn_tracker[chan]["round"]
-    turn_tracker[chan].update({"turn":cur_turn+1})
     if turn_tracker[chan]["turn"]==len(turn_tracker[chan]["order"]):
         turn_tracker[chan].update({"round":cur_round+1})
         await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
         turn_tracker[chan].update({"turn":0})
+        cur_turn=turn_tracker[chan]["turn"]
+    
     await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
+    
+    if "reminder" in turn_tracker[chan]:
+        for i in turn_tracker[chan]["reminder"]:
+            print(i)
+            if (i[0]==turn_tracker[chan]['order'][cur_turn][0]) and (i[1]==turn_tracker[chan]['round']):
+                await ctx.send(i[2])
+
+    
+    turn_tracker[chan].update({"turn":cur_turn+1})
     print(turn_tracker[chan])
 
 @bot.command( description="Turn Tracker.")
-async def show(ctx):
+async def show(ctx,init="False"):
     chan=ctx.channel.id
     
     init_list=[]
@@ -1730,27 +1748,31 @@ async def show(ctx):
     order_list=[]
     order_str=""
 
-    for i,j in turn_tracker[chan]["init"].items():
-        print(i)
-        init_list.append((i,j))
-    print(init_list)
-    init_list=list(enumerate(init_list,1))
-    init_str=[f"Inititiave table for {ctx.message.channel.name}"+os.linesep]
-    for i in init_list:
-        init_str+=((f"**{i[0]}**. {i[1][0]}  *{i[1][1]}*"+os.linesep))
-    init_str=''.join(init_str)
-    await ctx.send(init_str)
+    if (turn_tracker[chan]["started"]==False) or init.casefold()=="init":
+        for i,j in turn_tracker[chan]["init"].items():
+            print(i)
+            init_list.append((i,j))
+        print(init_list)
+        init_list=list(enumerate(init_list,1))
+        init_str=[f"Entered Init so far: {ctx.message.channel.name}"+os.linesep]
+        for i in init_list:
+            usr= await ctx.guild.fetch_member(i[1][0])
+            init_str+=((f"**{i[0]}**. {usr.nick}  *{i[1][1]}*"+os.linesep))
+        init_str=''.join(init_str)
+        await ctx.send(init_str)
 
-    for i,j in turn_tracker[chan]["order"].items():
-        print(i)
-        order_list.append((i,j))
-    print(order_list)
-    order_list=list(enumerate(order_list,1))
-    order_str=[f"Current combast order in {ctx.message.channel.name}"+os.linesep]
-    for i in order_list:
-        order_str+=((f"**{i[0]}**. {i[1][0]}  *{i[1][1]}*"+os.linesep))
-    order_str=''.join(order_str)
-    await ctx.send(order_str)
+    if turn_tracker[chan]["started"]==True:
+        for i in turn_tracker[chan]["order"]:
+            print(i)
+            order_list.append((i[0],i[1]))
+        print(order_list)
+        order_list=list(enumerate(order_list,1))
+        order_str=[f"Current Init order in {ctx.message.channel.name}"+os.linesep]
+        for i in order_list:
+            usr= await ctx.guild.fetch_member(i[1][0])
+            order_str+=((f"**{i[0]}**. {usr.nick}  *{i[1][1]}*"+os.linesep))
+        order_str=''.join(order_str)
+        await ctx.send(order_str)
 
     #init_list+f"{i}"+os.linesep
     
@@ -1761,6 +1783,15 @@ async def clear(ctx,):
     global turn_tracker
     del turn_tracker[chan]
     await ctx.send("gg")
+
+@bot.command( description="Turn Tracker.")
+async def turn(ctx,number:int,comment="ping"):
+    chan=ctx.channel.id  
+    usr=ctx.author
+    global turn_tracker
+
+    cur_round=turn_tracker[chan]["round"]
+    turn_tracker[chan].update({"reminder":(usr.id,cur_round+number,comment)})  
 
 #################
 #New Skill module
