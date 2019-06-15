@@ -2010,6 +2010,7 @@ async def update(ctx,cape, opponent, outcome,inv=False):
             outcome=int(outcome)
             if outcome!=1 and outcome!=0:
                 await ctx.send("Outcome must be win or loss!")
+                return
     #print(f"Start: {outcome}, {inv}, {cape}, {opponent}")
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
