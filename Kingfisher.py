@@ -88,7 +88,9 @@ gc = gspread.authorize(credentials)
 
 feed=[[],[],[]]
 #kingfisher reference doc
-RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU') #kf reference doc
+with open("Reference.txt", 'r') as f:
+        reference=f.read()
+RefSheet = gc.open_by_key(reference) #kf reference doc
 sheet = RefSheet.worksheet("Wounds") #wd20
 feed[0] = sheet.get_all_values()
 sheet_SD=RefSheet.worksheet("Wounds_SD") #skitterdice
@@ -2006,6 +2008,8 @@ async def update(ctx,cape, opponent, outcome,inv=False):
             outcome=0
         else:
             outcome=int(outcome)
+            if outcome!=1 and outcome!=0:
+                await ctx.send("Outcome must be win or loss!")
     #print(f"Start: {outcome}, {inv}, {cape}, {opponent}")
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)

@@ -102,6 +102,7 @@ ENV/
 Token.txt
 Token_server.txt
 gspread.json
+Reference.txt
 
 .htaccess
 #folders
