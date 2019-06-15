@@ -27,7 +27,7 @@ from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
 from ruamel.yaml import YAML
 
-version="0.2 Rewrite"
+version="0.2.1 Turn Tracker"
 ###useful resources
 #for colours
 #www.htmlcsscolor.com/hex
