@@ -1265,7 +1265,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
                     elif limbaim==True:
                         if i[2].casefold() in ["arm","legs"]:
                             typlist.append(i)
-                    elif (i[2].casefold()==aimt.casefold()) or (aimt=="Any") or (i[2]=="Any"):
+                    elif (i[2].casefold()==aimt.casefold()) or (aimt.casefold()=="Any".casefold()) or (i[2]=="Any"):
                         typlist.append(i)
         embed=[]
         if "title" in typus:
@@ -1705,7 +1705,7 @@ async def init(ctx, score:float):
         turn_tracker[chan]["init"].update({a_id:score})
     else:
         turn_tracker[chan]={"init":{ctx.author.id:score},"turn":0,"round":1,"started":False}
-    #await ctx.message.add_reaction("✅")
+    await ctx.message.add_reaction("✅")
     #print(sorted(turn_tracker[chan]["init"].items(), key=lambda x:x[1],reverse=True))
     #print(turn_tracker)
 
@@ -1725,6 +1725,7 @@ async def end(ctx, force=False):
 
     chan=ctx.channel.id
     cur_turn=turn_tracker[chan]["turn"]
+    rem_turn=cur_turn
     cur_round=turn_tracker[chan]["round"]
     if turn_tracker[chan]['order'][cur_turn-1][0]!=ctx.author.id and force==False:
         await ctx.send("Not your turn! If player is afk or else, use >end True")
@@ -1740,8 +1741,15 @@ async def end(ctx, force=False):
     
     if "reminder" in turn_tracker[chan]:
         for i in turn_tracker[chan]["reminder"]:
-            if (i[3]==turn_tracker[chan]['turn']) and (i[1]==turn_tracker[chan]['round']):
-                await ctx.send(f"Reminder for {await naming(ctx.guild,i[0])} {i[2]}")
+            
+            print(f"turn {cur_turn} rem:{rem_turn} looking for {i[3]}")
+
+            print(f"round {cur_round} looking for {i[1]}")
+
+            if (i[3]==rem_turn) and (i[1]==cur_round): #CONT
+                print("sending reminder")
+                name=await naming(ctx.guild,i[0])
+                await ctx.send(f"Reminder for {name} {i[2]}")
   
     turn_tracker[chan].update({"turn":cur_turn+1})
 
@@ -1749,6 +1757,7 @@ async def end(ctx, force=False):
 async def show(ctx,init="False"):
     chan=ctx.channel.id
     
+    print(turn_tracker[chan])
     init_list=[]
     init_str=""
     
@@ -1759,7 +1768,7 @@ async def show(ctx,init="False"):
         for i,j in turn_tracker[chan]["init"].items():
             init_list.append((i,j))
         init_list=list(enumerate(init_list,1))
-        init_str=[f"Entered Init so far: {ctx.message.channel.name}"+os.linesep]
+        init_str=[f"Init so far:"+os.linesep]
         for i in init_list:
             usr= await ctx.guild.fetch_member(i[1][0])
             init_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
@@ -1778,6 +1787,45 @@ async def show(ctx,init="False"):
         await ctx.send(order_str)
 
     #init_list+f"{i}"+os.linesep
+
+@bot.command( description="Turn Tracker.")
+async def kick(ctx,user):
+    #kick whoevers turn it is by default
+    chan=ctx.channel.id
+    global turn_tracker
+    #usr to id
+    #id
+    usr=None
+    try:
+        usr_int=int(user)
+        usr = ctx.guild.get_member(usr_int)
+    except:
+        pass
+    
+
+    #nick
+    if usr==None:
+        usr = ctx.guild.get_member_named(user)
+    
+    #name
+    pass 
+    #try:
+    #usr= await bot.fetch_user()
+                       
+    
+    
+    if usr==None:
+        await ctx.send("No fucking clue who that is.")
+        return
+    #ping
+    print(usr)
+    print(turn_tracker[chan]["order"])
+    for i in turn_tracker[chan]["order"]:
+        if usr.id==i[0]:
+            turn_tracker[chan]["order"].remove(i)
+            await ctx.message.add_reaction("✅")
+            
+    
     
 @bot.command( description="Turn Tracker.")
 async def clear(ctx,):
@@ -1796,7 +1844,11 @@ async def turn(ctx,number:int,*comment):
     comment=" ".join(comment)
     cur_round=turn_tracker[chan]["round"]
     cur_turn=turn_tracker[chan]["turn"]
-    turn_tracker[chan].update({"reminder":[(usr.id,cur_round+number,comment,cur_turn)]})  
+    if "reminder" in turn_tracker[chan]:
+        turn_tracker[chan]["reminder"].append((usr.id,cur_round+number,comment,cur_turn))
+    else: 
+        turn_tracker[chan].update({"reminder":[(usr.id,cur_round+number,comment,cur_turn)]})
+    await ctx.message.add_reaction("✅")  
 
 #################
 #New Skill module
