@@ -1690,7 +1690,10 @@ turn_tracker={}
                     First, everyone enters their initiative score by using >init 11 etc. 
                     If two people need to roll off (say both roll an 11), the winner of the rolloff should enter their initiative as 11.5
                     Once everyone has entered their score, simply use >start to get going!
-                    if you have finished your turn, simply use >end
+                    If you have finished your turn, simply use >end
+
+                    You can remove people (like KO'd characters) by using the >kick command on their turn, or entering their name.
+
                     When your fight is done, use >clear to empty the initiative queue
 
                     You can set reminders (e.g. willpowered wounds returning in 2 rounds) by using >turn 2 wp expires
@@ -1709,7 +1712,7 @@ async def init(ctx, score:float):
     #print(sorted(turn_tracker[chan]["init"].items(), key=lambda x:x[1],reverse=True))
     #print(turn_tracker)
 
-@bot.command( description="Turn Tracker.")
+@bot.command( description="Once everyone has entered their score, simply use >start to get going!")
 async def start(ctx):
     chan=ctx.channel.id
     global turn_tracker
@@ -1721,8 +1724,7 @@ async def start(ctx):
         await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
         turn_tracker[chan].update({"turn":cur_turn+1})
 
-
-@bot.command( description="Turn Tracker.")
+@bot.command( description="Once you have finished your turn, simply use >end")
 async def end(ctx, force=False):
 
     chan=ctx.channel.id
@@ -1745,18 +1747,16 @@ async def end(ctx, force=False):
     if "reminder" in turn_tracker[chan]:
         for i in turn_tracker[chan]["reminder"]:
             
-            print(f"turn {cur_turn} rem:{rem_turn} looking for {i[3]}")
-
-            print(f"round {cur_round} looking for {i[1]}")
+            #print(f"turn {cur_turn} rem:{rem_turn} looking for {i[3]}")
+            #print(f"round {cur_round} looking for {i[1]}")
 
             if (i[3]==rem_turn) and (i[1]==cur_round):
-                print("sending reminder")
                 name=await naming(ctx.guild,i[0])
                 await ctx.send(f"Reminder for {name} {i[2]}")
   
     turn_tracker[chan].update({"turn":cur_turn+1})
 
-@bot.command( description="Turn Tracker.")
+@bot.command( description="Shows current Initiative order. Use *>show init* to check what re*>start*ing would look like.")
 async def show(ctx,init="False"):
     chan=ctx.channel.id
     
@@ -1791,7 +1791,7 @@ async def show(ctx,init="False"):
 
     #init_list+f"{i}"+os.linesep
 
-@bot.command( description="Turn Tracker.")
+@bot.command( description="You can remove people (like KO'd characters) by using the >kick command on their turn, or entering their name.")
 async def kick(ctx,*user):
     #kick whoevers turn it is by default
     chan=ctx.channel.id
@@ -1814,7 +1814,6 @@ async def kick(ctx,*user):
         usr = ctx.guild.get_member(usr_int)
     except:
         pass
-    
 
     #nick
     try:
@@ -1823,35 +1822,24 @@ async def kick(ctx,*user):
     except:
         pass
     
-    #name
-    try:
-        usr= await bot.fetch_user()
-    except:
-        pass
-                       
-    
-    
     if usr==None:
         await ctx.send("No fucking clue who that is.")
         return
     #ping
-    print(usr)
-    print(turn_tracker[chan]["order"])
     for i in turn_tracker[chan]["order"]:
         if usr.id==i[0]:
             turn_tracker[chan]["order"].remove(i)
-            await ctx.message.add_reaction("✅")
-            
+            await ctx.send(f"<@!{usr.id}> has been removed on Turn {turn_tracker[chan]['turn']}, Round {turn_tracker[chan]['round']}")
+            return
     
-    
-@bot.command( description="Turn Tracker.", alias="gg")
+@bot.command( description="When your fight is done, use >clear to empty the initiative queue", alias="gg")
 async def clear(ctx,):
     chan=ctx.channel.id
     global turn_tracker
     del turn_tracker[chan]
     await ctx.send("gg")
 
-@bot.command( description="Set reminders for stuff happening in x turns.")
+@bot.command( description="You can set reminders (e.g. willpowered wounds returning in 2 rounds) by using >turn 2 wp expires.")
 async def turn(ctx,number:int,*comment):
     chan=ctx.channel.id  
     usr=ctx.author
@@ -1861,6 +1849,8 @@ async def turn(ctx,number:int,*comment):
     comment=" ".join(comment)
     cur_round=turn_tracker[chan]["round"]
     cur_turn=turn_tracker[chan]["turn"]
+    if cur_round==1 and cur_turn==1:
+        cur_turn=cur_turn-1
     if "reminder" in turn_tracker[chan]:
         turn_tracker[chan]["reminder"].append((usr.id,cur_round+number,comment,cur_turn))
     else: 
