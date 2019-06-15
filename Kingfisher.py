@@ -466,7 +466,7 @@ async def updateFeed(ctx):
     global triggerfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
-    RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
+    RefSheet = gc.open_by_key(reference)
     sheet = RefSheet.worksheet("Wounds")
     feed[0] = sheet.get_all_values()
     sheet_SD=RefSheet.worksheet("Wounds_SD")
