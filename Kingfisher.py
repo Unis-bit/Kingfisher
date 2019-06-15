@@ -1716,8 +1716,10 @@ async def start(ctx):
     turn_tracker[chan]["order"]=sorted(turn_tracker[chan]["init"].items(), key=operator.itemgetter(1),reverse=True)
     turn_tracker[chan]["started"]=True
     cur_turn=turn_tracker[chan]["turn"]
-    await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
-    turn_tracker[chan].update({"turn":cur_turn+1})
+    cur_round=turn_tracker[chan]["round"]
+    if cur_round==1:
+        await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
+        turn_tracker[chan].update({"turn":cur_turn+1})
 
 
 @bot.command( description="Turn Tracker.")
@@ -1739,6 +1741,7 @@ async def end(ctx, force=False):
     
     await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
     
+    #turn reminder logic
     if "reminder" in turn_tracker[chan]:
         for i in turn_tracker[chan]["reminder"]:
             
@@ -1746,7 +1749,7 @@ async def end(ctx, force=False):
 
             print(f"round {cur_round} looking for {i[1]}")
 
-            if (i[3]==rem_turn) and (i[1]==cur_round): #CONT
+            if (i[3]==rem_turn) and (i[1]==cur_round):
                 print("sending reminder")
                 name=await naming(ctx.guild,i[0])
                 await ctx.send(f"Reminder for {name} {i[2]}")
@@ -1789,10 +1792,20 @@ async def show(ctx,init="False"):
     #init_list+f"{i}"+os.linesep
 
 @bot.command( description="Turn Tracker.")
-async def kick(ctx,user):
+async def kick(ctx,*user):
     #kick whoevers turn it is by default
     chan=ctx.channel.id
     global turn_tracker
+    
+    if user==():
+        cur_turn=turn_tracker[chan]["turn"]
+        for i in turn_tracker[chan]["order"]:
+            if turn_tracker[chan]['order'][cur_turn-1][0]==i[0]:
+                turn_tracker[chan]["order"].remove(i)
+                await ctx.message.add_reaction("✅")
+                return
+
+    user=" ".join(user)
     #usr to id
     #id
     usr=None
@@ -1804,13 +1817,17 @@ async def kick(ctx,user):
     
 
     #nick
-    if usr==None:
-        usr = ctx.guild.get_member_named(user)
+    try:
+        if usr==None:
+            usr = ctx.guild.get_member_named(user)
+    except:
+        pass
     
     #name
-    pass 
-    #try:
-    #usr= await bot.fetch_user()
+    try:
+        usr= await bot.fetch_user()
+    except:
+        pass
                        
     
     
@@ -1827,7 +1844,7 @@ async def kick(ctx,user):
             
     
     
-@bot.command( description="Turn Tracker.")
+@bot.command( description="Turn Tracker.", alias="gg")
 async def clear(ctx,):
     chan=ctx.channel.id
     global turn_tracker
