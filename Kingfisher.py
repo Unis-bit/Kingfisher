@@ -1720,7 +1720,7 @@ async def start(ctx):
     turn_tracker[chan]["started"]=True
     cur_turn=turn_tracker[chan]["turn"]
     cur_round=turn_tracker[chan]["round"]
-    if cur_round==1:
+    if cur_round==1 and cur_turn==0:
         await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
         turn_tracker[chan].update({"turn":cur_turn+1})
 
@@ -1832,7 +1832,7 @@ async def kick(ctx,*user):
             await ctx.send(f"<@!{usr.id}> has been removed on Turn {turn_tracker[chan]['turn']}, Round {turn_tracker[chan]['round']}")
             return
     
-@bot.command( description="When your fight is done, use >clear to empty the initiative queue", alias="gg")
+@bot.command( description="When your fight is done, use >clear to empty the initiative queue", aliases=["gg"])
 async def clear(ctx,):
     chan=ctx.channel.id
     global turn_tracker
