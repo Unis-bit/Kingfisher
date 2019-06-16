@@ -1737,7 +1737,7 @@ async def end(ctx, force=False):
         await ctx.send("Not your turn! If player is afk or else, use >end True")
         return
 
-    if turn_tracker[chan]["turn"]==len(turn_tracker[chan]["order"]):
+    if turn_tracker[chan]["turn"]>=len(turn_tracker[chan]["order"]):
         turn_tracker[chan].update({"round":cur_round+1})
         await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
         turn_tracker[chan].update({"turn":0})
@@ -1801,10 +1801,22 @@ async def kick(ctx,*user):
     
     if user==():
         cur_turn=turn_tracker[chan]["turn"]
+        cur_round=turn_tracker[chan]["round"]
         for i in turn_tracker[chan]["order"]:
             if turn_tracker[chan]['order'][cur_turn-1][0]==i[0]:
                 turn_tracker[chan]["order"].remove(i)
                 await ctx.message.add_reaction("✅")
+                
+                if turn_tracker[chan]["turn"]>=len(turn_tracker[chan]["order"]):
+                    turn_tracker[chan].update({"round":cur_round+1})
+                    await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
+                    turn_tracker[chan].update({"turn":0})
+                    cur_turn=turn_tracker[chan]["turn"]
+
+                await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
+                turn_tracker[chan].update({"turn":cur_turn+1})
+
+                
                 return
 
     user=" ".join(user)
