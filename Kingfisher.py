@@ -845,8 +845,8 @@ async def owners(ctx,title,new_owner,remove="add"):
                         k["Owners"].remove(new_owner_id)
                     else:
                         k["Owners"].append(new_owner_id)
-                else:
-                    await ctx.send("Not your Bookmark!")
+                #else:
+                    #await ctx.send("Not your Bookmark!")
     with open(f"bm.yaml",mode="w+") as f:
         f.seek(0)
         yaml.dump(bm_feed,f)
