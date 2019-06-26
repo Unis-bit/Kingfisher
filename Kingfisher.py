@@ -41,13 +41,15 @@ version="0.2.1 Turn Tracker"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions={"labyrinth":ImageColor.getrgb("#bff360"), "warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
-"avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
+gh_factions={"vanguard":ImageColor.getrgb("#2ec870"),"veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),"labyrinth":ImageColor.getrgb("#bff360"),"neutral":(255,255,255), "independent":(163, 145, 108)}
+#"x":ImageColor.getrgb("x"),
 
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
 # "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
 #"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
+#"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,
+#"avalon":(173, 20, 87),"uplift":(26, 151, 73),
 
 gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
 (473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
@@ -1722,12 +1724,13 @@ async def start(ctx):
     turn_tracker[chan]["started"]=True
     cur_turn=turn_tracker[chan]["turn"]
     cur_round=turn_tracker[chan]["round"]
+    #await ctx.invoke(end,"True",start)
     if cur_round==1 and cur_turn==0:
         await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
         turn_tracker[chan].update({"turn":cur_turn+1})
 
 @bot.command( description="Once you have finished your turn, simply use >end")
-async def end(ctx, force=False,invoked=False):
+async def end(ctx, force=False,invoked=False,): #start=False
 
     chan=ctx.channel.id
     cur_turn=turn_tracker[chan]["turn"]
@@ -1806,7 +1809,7 @@ async def kick(ctx,*user):
             if turn_tracker[chan]['order'][cur_turn-1][0]==i[0]:
                 turn_tracker[chan]["order"].remove(i)
                 await ctx.message.add_reaction("✅")
-                
+                turn_tracker[chan]["turn"]-=1
                 await ctx.invoke(end,"True",True)
                 # making sure the turns move on correctly
                 # if turn_tracker[chan]["turn"]>=len(turn_tracker[chan]["order"]):
@@ -1845,6 +1848,7 @@ async def kick(ctx,*user):
     for i in turn_tracker[chan]["order"]:
         if usr.id==i[0]:
             turn_tracker[chan]["order"].remove(i)
+            turn_tracker[chan]["turn"]-=1
             await ctx.send(f"<@!{usr.id}> has been removed on Turn {turn_tracker[chan]['turn']}, Round {turn_tracker[chan]['round']}")
             return
     
