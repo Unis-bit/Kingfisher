@@ -41,9 +41,10 @@ version="0.2.1 Turn Tracker"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions={"vanguard":ImageColor.getrgb("#2ec870"),"veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),"labyrinth":ImageColor.getrgb("#bff360"),"neutral":(255,255,255), "independent":(163, 145, 108)}
+gh_factions={"grove":ImageColor.getrgb("#f18f22"),"apex":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),"labyrinth":ImageColor.getrgb("#bff360"),
+                "convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
-
+#
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
 # "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
