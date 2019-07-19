@@ -1711,15 +1711,23 @@ turn_tracker={}
                     You can set reminders (e.g. willpowered wounds returning in 2 rounds) by using >turn 2 wp expires
 
                     This also supports re-shuffling init in the middle of a fight. 
+
+                    If you are a QG, you can add NPCs via *>init 11 NPC1* (beta)
                     """)
-async def init(ctx, score:float):
+async def init(ctx, score:float, alias=None):
     chan=ctx.channel.id
     global turn_tracker
     if chan in turn_tracker.keys(): 
-        a_id=ctx.author.id
+        if alias==None:
+            a_id=ctx.author.id
+        else:
+            a_id=alias
         turn_tracker[chan]["init"].update({a_id:score})
     else:
-        turn_tracker[chan]={"init":{ctx.author.id:score},"turn":0,"round":1,"started":False}
+        if alias==None:
+            turn_tracker[chan]={"init":{ctx.author.id:score},"turn":0,"round":1,"started":False}
+        else:
+            turn_tracker[chan]={"init":{alias:score},"turn":0,"round":1,"started":False}   
     await ctx.message.add_reaction("✅")
     #print(sorted(turn_tracker[chan]["init"].items(), key=lambda x:x[1],reverse=True))
     #print(turn_tracker)
@@ -1787,8 +1795,15 @@ async def show(ctx,init="False"):
         init_list=list(enumerate(init_list,1))
         init_str=[f"Init so far:"+os.linesep]
         for i in init_list:
-            usr= await ctx.guild.fetch_member(i[1][0])
-            init_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
+            try:
+                usr= await ctx.guild.fetch_member(i[1][0])
+            except:
+                usr=i[1][0]
+            print(type(usr))
+            if isinstance(usr, discord.member.Member):
+                init_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
+            else:
+                init_str+=((f"**{i[0]}**. {usr}  *{i[1][1]}*"+os.linesep))
         init_str=''.join(init_str)
         await ctx.send(init_str)
 
@@ -1798,8 +1813,14 @@ async def show(ctx,init="False"):
         order_list=list(enumerate(order_list,1))
         order_str=[f"Current Init order in {ctx.message.channel.name}"+os.linesep]
         for i in order_list:
-            usr= await ctx.guild.fetch_member(i[1][0])
-            order_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
+            try:
+                usr= await ctx.guild.fetch_member(i[1][0])
+            except:
+                usr=i[1][0]
+            if isinstance(usr, discord.member.Member):
+                order_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
+            else:
+                order_str+=((f"**{i[0]}**. {usr}  *{i[1][1]}*"+os.linesep))
         order_str=''.join(order_str)
         await ctx.send(order_str)
 
