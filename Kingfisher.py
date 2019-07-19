@@ -42,7 +42,7 @@ version="0.2.1 Turn Tracker"
 
 #gh stuff
 gh_factions={"grove":ImageColor.getrgb("#f18f22"),"apex":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),"labyrinth":ImageColor.getrgb("#bff360"),
-                "convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
+                "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
 #
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
@@ -1588,6 +1588,10 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
         elif any(e[0].casefold() == content1.casefold() for e in tags):
             await ctx.send("Name already taken.")
             return
+        if "@everyone" in content2 or "@here" in content2:
+            await ctx.send("How about you don't try that.")
+            return
+        
         gc = gspread.authorize(credentials)
         RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
         tagsSheet = RefSheet.worksheet("Tags")
@@ -1629,6 +1633,9 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             else:
                 await ctx.send("Not your tag!")
         elif tag.casefold()=="update":
+            if "@everyone" in content2 or "@here" in content2:
+                await ctx.send("How about you don't try that.")
+                return
             gc = gspread.authorize(credentials)
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
             tagsSheet = RefSheet.worksheet("Tags")
@@ -2144,7 +2151,7 @@ def g_phi(rd_cape):
     g_phi_r=1/(math.sqrt(1+(3*(rd_cape**2)/math.pi**2)))
     return g_phi_r
 
-@bot.group( description="Available commands: show, make, update, income. Show your balance, Make an account, Update your balance, Increase your weekly income.")
+@bot.group( description="Available commands: show, make, update, income. Show your balance, Make an account, Update your balance, Increase your weekly income.",aliases=["acc"])
 async def account(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send('Available commands: show, make, update, income. Show your balance, Make an account, Update your balance, Increase your weekly income.')
