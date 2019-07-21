@@ -1491,7 +1491,10 @@ async def roll(ctx,formula="default",*comment):
     requester=ctx.message.author.name
     out_roll=[f"{requester}: ("]
     
-    if (repeats>(10e4)) or (dice>(10e4)):
+    #print(repeats)
+    #print(dice)
+    #print(i)
+    if (repeats>10e3) or (dice>10e3) or (i>10e3):
         await ctx.send("BRB, driving to the dice store. Oh no, looks like they're all out of dice, just like I am of fucks to give about your spammy rolls.")
         return
     for j in range(0,repeats):
@@ -1755,7 +1758,7 @@ async def end(ctx, force=False,invoked=False,): #start=False
     cur_turn=turn_tracker[chan]["turn"]
     rem_turn=cur_turn
     cur_round=turn_tracker[chan]["round"]
-    print(f"end: cur_turn {cur_turn} cur_round {cur_round}")
+    #print(f"end: cur_turn {cur_turn} cur_round {cur_round}")
     if invoked==False:
         if turn_tracker[chan]['order'][cur_turn-1][0]!=ctx.author.id and force==False:
             await ctx.send("Not your turn! If player is afk or else, use >end True")
@@ -1776,8 +1779,8 @@ async def end(ctx, force=False,invoked=False,): #start=False
     if "reminder" in turn_tracker[chan]:
         for i in turn_tracker[chan]["reminder"]:
             
-            print(f"cur_turn {cur_turn} rem_turn {rem_turn} looking for {i[3]}")
-            print(f"round {cur_round} looking for {i[1]}")
+            #print(f"cur_turn {cur_turn} rem_turn {rem_turn} looking for {i[3]}")
+            #print(f"round {cur_round} looking for {i[1]}")
 
             if (i[3]==rem_turn) and (i[1]==cur_round):
                 name=await naming(ctx.guild,i[0])
@@ -1785,8 +1788,8 @@ async def end(ctx, force=False,invoked=False,): #start=False
                 turn_tracker[chan]["reminder"].remove(i)
   
     turn_tracker[chan].update({"turn":cur_turn+1})
-    print(f"end2: cur_turn {cur_turn} cur_round {cur_round}")
-    print("--------")
+    #print(f"end2: cur_turn {cur_turn} cur_round {cur_round}")
+    #print("--------")
 
 @bot.command( description="Shows current Initiative order. Use *>show init* to check what re*>start*ing would look like.")
 async def show(ctx,init="False"):
