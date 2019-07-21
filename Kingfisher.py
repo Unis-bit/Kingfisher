@@ -27,7 +27,7 @@ from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
 from ruamel.yaml import YAML
 
-version="0.2.1 Turn Tracker"
+version="0.2.1a Turn Tracker"
 ###useful resources
 #for colours
 #www.htmlcsscolor.com/hex
@@ -1491,6 +1491,9 @@ async def roll(ctx,formula="default",*comment):
     requester=ctx.message.author.name
     out_roll=[f"{requester}: ("]
     
+    if (repeats>(10^3)) or (dice>(10^3)):
+        await ctx.send("BRB, driving to the dice store. Oh no, looks like they're all out of dice, just like I am of fucks to give about your spammy rolls.")
+        return
     for j in range(0,repeats):
         if (j!=0):
             out_roll.append(", (")
@@ -1752,6 +1755,7 @@ async def end(ctx, force=False,invoked=False,): #start=False
     cur_turn=turn_tracker[chan]["turn"]
     rem_turn=cur_turn
     cur_round=turn_tracker[chan]["round"]
+    print(f"end: cur_turn {cur_turn} cur_round {cur_round}")
     if invoked==False:
         if turn_tracker[chan]['order'][cur_turn-1][0]!=ctx.author.id and force==False:
             await ctx.send("Not your turn! If player is afk or else, use >end True")
@@ -1761,7 +1765,10 @@ async def end(ctx, force=False,invoked=False,): #start=False
         turn_tracker[chan].update({"round":cur_round+1})
         await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
         turn_tracker[chan].update({"turn":0})
+        
         cur_turn=turn_tracker[chan]["turn"]
+        cur_round=turn_tracker[chan]["round"]
+        rem_turn=cur_turn
     
     await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
     
@@ -1769,14 +1776,17 @@ async def end(ctx, force=False,invoked=False,): #start=False
     if "reminder" in turn_tracker[chan]:
         for i in turn_tracker[chan]["reminder"]:
             
-            #print(f"turn {cur_turn} rem:{rem_turn} looking for {i[3]}")
-            #print(f"round {cur_round} looking for {i[1]}")
+            print(f"cur_turn {cur_turn} rem_turn {rem_turn} looking for {i[3]}")
+            print(f"round {cur_round} looking for {i[1]}")
 
             if (i[3]==rem_turn) and (i[1]==cur_round):
                 name=await naming(ctx.guild,i[0])
                 await ctx.send(f"Reminder for {name} {i[2]}")
+                turn_tracker[chan]["reminder"].remove(i)
   
     turn_tracker[chan].update({"turn":cur_turn+1})
+    print(f"end2: cur_turn {cur_turn} cur_round {cur_round}")
+    print("--------")
 
 @bot.command( description="Shows current Initiative order. Use *>show init* to check what re*>start*ing would look like.")
 async def show(ctx,init="False"):
@@ -1898,12 +1908,12 @@ async def turn(ctx,number:int,*comment):
     comment=" ".join(comment)
     cur_round=turn_tracker[chan]["round"]
     cur_turn=turn_tracker[chan]["turn"]
-    if cur_round==1 and cur_turn==1:
-        cur_turn=cur_turn-1
+    #if cur_round==1 and cur_turn==1:
+        #cur_round=cur_round-1
     if "reminder" in turn_tracker[chan]:
-        turn_tracker[chan]["reminder"].append((usr.id,cur_round+number,comment,cur_turn))
+        turn_tracker[chan]["reminder"].append((usr.id,cur_round+number,comment,cur_turn-1))
     else: 
-        turn_tracker[chan].update({"reminder":[(usr.id,cur_round+number,comment,cur_turn)]})
+        turn_tracker[chan].update({"reminder":[(usr.id,cur_round+number,comment,cur_turn-1)]})
     await ctx.message.add_reaction("✅")  
 
 #################
