@@ -1491,7 +1491,7 @@ async def roll(ctx,formula="default",*comment):
     requester=ctx.message.author.name
     out_roll=[f"{requester}: ("]
     
-    if (repeats>(10^3)) or (dice>(10^3)):
+    if (repeats>(10e4)) or (dice>(10e4)):
         await ctx.send("BRB, driving to the dice store. Oh no, looks like they're all out of dice, just like I am of fucks to give about your spammy rolls.")
         return
     for j in range(0,repeats):
