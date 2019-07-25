@@ -42,7 +42,7 @@ version = "0.2.1a Turn Tracker"
 
 #gh stuff
 gh_factions = {"grove":ImageColor.getrgb("#f18f22"),"apex":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),"labyrinth":ImageColor.getrgb("#bff360"),
-               "phalanx":ImageColor.getrgb("#e67e22"),
+               "phalanx":ImageColor.getrgb("#f1c40f"),
                "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
 #
