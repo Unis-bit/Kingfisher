@@ -187,7 +187,7 @@ async def mapUpdate(faction,square,sid):
 
 #used to display rankings
 async def int_to_roman(input):
-    if not isinstance(input,1):
+    if not isinstance(input,int):
         raise TypeError(f"expected integer, got {type(input)}")
     if not 0 < input < 4000:
         raise ValueError("Argument must be between 1 and 3999")
