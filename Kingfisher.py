@@ -11,72 +11,78 @@ import platform
 import random
 import re
 import sched
+import sys
 import time
 import threading
 import traceback
 
 
-import discord  #the crown jewel
+import discord  # the crown jewel
 import aiohttp
 import gspread
 import pytz
 from discord.ext import commands
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Cog
 from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
+from ruamel.yaml import YAML
+from operator import itemgetter
 
-version="0.2 Rewrite"
+version = "0.2.1a Turn Tracker"
 ###useful resources
 #for colours
 #www.htmlcsscolor.com/hex
 
 
 #TODO: add https://cdn.discordapp.com/attachments/476482380123602946/561997332212875266/lbj5xp1y2hp21.png style colour wheel for new role colour suggestions!
-#TODO: add questping
 #TODO: add self tagging
-#TODO: add round tracker
 #TODO: ranking rework
 #TODO: add server configuration
 
 #gh stuff
-gh_factions={"labyrinth":ImageColor.getrgb("#bff360"), "warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,"royals":ImageColor.getrgb("#ff69b4"),
-"avalon":(173, 20, 87),"uplift":(26, 151, 73), "neutral":(255,255,255), "independent":(163, 145, 108)}
-
+gh_factions = {"grove":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
+               "phalanx":ImageColor.getrgb("#ffcc00"),
+               "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
+#"x":ImageColor.getrgb("x"),
+#
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
 # "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
 #"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
+#"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,
+#"avalon":(173, 20, 87),"uplift":(26, 151, 73), "veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),
 
-gh_areas=[(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
-(473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
-(293.3333333,194.6666667),(226.6666667,203.3333333),(166.6666667,184),(150.6666667,229.3333333),(113.3333333,224.6666667),(114,283.3333333),(181.3333333,234),
-(215.3333333,228.6666667),(262.6666667,238),(223.3333333,286),(379.3333333,230.6666667),(440.6666667,272.6666667),(464.6666667,241.3333333),(498,291.3333333),(490,320),
-(410,308),(351.3333333,278),(357.3333333,318),(250.6666667,322),(214.6666667,338),(134.6666667,309.3333333),(170.6666667,344.6666667),(166.6666667,378),(166,428),
-(239.3333333,392),(244.6666667,428),(278,376.6666667),(318,387.3333333),(316.6666667,433.3333333),(393.3333333,352.6666667),(359.3333333,412.6666667),(422.6666667,387.3333333),
-(458.6666667,378),(490.6666667,394.6666667),(494,458.6666667),(430.6666667,420.6666667),(439.3333333,459.3333333),(350.6666667,475.3333333),(271.3333333,494),
-(229.3333333,499.3333333),(190,484.6666667),(148,460),(174.6666667,509.3333333),(190.6666667,545.3333333),(278,546.6666667),(331.3333333,524),(380,553.3333333),
-(422.6666667,525.3333333),(455.3333333,512.6666667),(498,525.3333333)]
+# discord default colours: https://www.reddit.com/r/discordapp/comments/849bxc/what_are_the_hex_values_of_all_the_default_role/dvo5k3g/
 
-typ_colours={"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403,
-                "Armor":0x565759,"Engine":0x565759,"Wheel":0x565759,"System":0x565759,"Structural":0x565759}
-muted_usr=[]
+gh_areas = [(100,122),(132.67,120),(192,118.6666667),(234.6666667,140.6666667),(268.6666667,165.3333333),(313.3333333,129.3333333),(372.6666667,126),(429.3333333,60),
+            (473.3333333,20),(458.6666667,81.33333333),(498.6666667,53.33333333),(477.3333333,130),(482,162.6666667),(492,217.3333333),(415.3333333,207.3333333),(369.3333333,192),
+            (293.3333333,194.6666667),(226.6666667,203.3333333),(166.6666667,184),(150.6666667,229.3333333),(113.3333333,224.6666667),(114,283.3333333),(181.3333333,234),
+            (215.3333333,228.6666667),(262.6666667,238),(223.3333333,286),(379.3333333,230.6666667),(440.6666667,272.6666667),(464.6666667,241.3333333),(498,291.3333333),(490,320),
+            (410,308),(351.3333333,278),(357.3333333,318),(250.6666667,322),(214.6666667,338),(134.6666667,309.3333333),(170.6666667,344.6666667),(166.6666667,378),(166,428),
+            (239.3333333,392),(244.6666667,428),(278,376.6666667),(318,387.3333333),(316.6666667,433.3333333),(393.3333333,352.6666667),(359.3333333,412.6666667),(422.6666667,387.3333333),
+            (458.6666667,378),(490.6666667,394.6666667),(494,458.6666667),(430.6666667,420.6666667),(439.3333333,459.3333333),(350.6666667,475.3333333),(271.3333333,494),
+            (229.3333333,499.3333333),(190,484.6666667),(148,460),(174.6666667,509.3333333),(190.6666667,545.3333333),(278,546.6666667),(331.3333333,524),(380,553.3333333),
+            (422.6666667,525.3333333),(455.3333333,512.6666667),(498,525.3333333)]
+
+typ_colours = {"Bash":0x0137f6,"Pierce":0xffa500,"Cut":0xb22649,"Freeze":0x00ecff,"Shock":0xd6ff00,"Rend":0x9937a5,"Burn":0x0fe754, "Poison":0x334403,
+               "Armor":0x565759,"Engine":0x565759,"Wheel":0x565759,"System":0x565759,"Structural":0x565759}
+muted_usr = []
 
 
-clientloop=asyncio.new_event_loop()
+clientloop = asyncio.new_event_loop()
 asyncio.set_event_loop(clientloop)
-owner = [138340069311381505] #hyper#4131
+owner = [138340069311381505]  # hyper#4131
 
 logging.basicConfig(level=logging.INFO)
-#logger = logging.getLogger('discord')
-#logger.setLevel(logging.DEBUG)
-#handler = logging.FileHandler(filename=f'discord.log', encoding='utf-8', mode='a')
-#handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-#logger.addHandler(handler)
+# logger = logging.getLogger('discord')
+# logger.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(filename=f'discord.log', encoding='utf-8', mode='a')
+# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# logger.addHandler(handler)2
 
-#pylint suppressions
+# pylint suppressions
 # pylint: disable=E0102, W1401
-
 
 # Setup the Sheets API
 scope = ['https://spreadsheets.google.com/feeds',
@@ -87,12 +93,14 @@ gc = gspread.authorize(credentials)
 
 feed=[[],[],[]]
 #kingfisher reference doc
-RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU') #kf reference doc
-sheet = RefSheet.worksheet("Wounds") #wd20
+with open("Reference.txt", 'r') as f:
+        reference=f.read()
+RefSheet = gc.open_by_key(reference) # kf reference doc
+sheet = RefSheet.worksheet("Wounds") # wd20
 feed[0] = sheet.get_all_values()
-sheet_SD=RefSheet.worksheet("Wounds_SD") #skitterdice
+sheet_SD=RefSheet.worksheet("Wounds_SD") # skitterdice
 feed[1] = sheet_SD.get_all_values()
-sheet_WD=RefSheet.worksheet("Wounds_WD") #original weaverdice
+sheet_WD=RefSheet.worksheet("Wounds_WD") # original weaverdice
 feed[2] = sheet_WD.get_all_values()
 tagsSheet = RefSheet.worksheet("Tags")
 tags = tagsSheet.get_all_values()
@@ -104,16 +112,17 @@ triggerSheet = RefSheet.worksheet("Triggers")
 triggerfeed = triggerSheet.get_all_values()
 
 #vials
-VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg") #arcan's vial doc
+VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg") # arcan's vial doc
 sheet = VialDoc.worksheet("Full Vials")
 vialfeed = sheet.get_all_values()
-sPlanner = sched.scheduler(time.time, time.sleep) #class sched.scheduler(timefunc=time.monotonic, delayfunc=time.sleep)
+sPlanner = sched.scheduler(time.time, time.sleep) # class sched.scheduler(timefunc=time.monotonic, delayfunc=time.sleep)
 
 #global variables
 macros={}
 
 # Here you can modify the bot's prefix and description and whether it sends help in direct messages or not.
-bot = Bot(description=f"Thinkerbot version {version}", command_prefix=(">","<"), pm_help = False, case_insensitive=True,owner_id=138340069311381505)
+bot = Bot(description=f"Thinkerbot version {version}", command_prefix=(">","<",";"), pm_help=False, case_insensitive=True,owner_id=138340069311381505)
+
 
 # This is what happens every time the bot launches. In this case, it prints information like server count, user count the bot is connected to, and the bot id in the console.
 # Do not mess with it because the bot can break, if you wish to do so, please consult me or someone trusted.
@@ -121,17 +130,18 @@ bot = Bot(description=f"Thinkerbot version {version}", command_prefix=(">","<"),
 async def on_connect():
     print("connected!")
     await bot.change_presence(activity=discord.Game(name='>help | >nest'))
-    
+
     global b_task
     global b_task2
     b_task=bot.loop.create_task(account_decay())
     b_task2=bot.loop.create_task(rank_decay())
-    
+
     #roll macros
     global macros
     with open(f"roll_macros.txt",mode="r") as f:
         macros = json.load(f)
-    return 
+    return
+
 
 @bot.event
 async def on_ready():
@@ -151,9 +161,9 @@ async def on_ready():
                 timer=i['time']
                 content=i['content']
                 destination=bot.get_channel(i['destination'])
-                sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe , argument=(destination.send(content),loop,), kwargs={})
+                sPlanner.enterabs(timer, 10, asyncio.run_coroutine_threadsafe, argument=(destination.send(content),loop,), kwargs={})
         #end resume
-    
+
 
 ###Functions
 #to add new factions
@@ -168,26 +178,28 @@ async def mapUpdate(faction,square,sid):
     if (sid=="gh") or (sid=="test"):
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], (255,255,255))
         ImageDraw.floodfill(detroitmap, gh_areas[square-1], gh_factions[faction])
-    
+
     detroitmap.save(f"map_{sid}/factionmap.png") #only the coloured squares
     detroitmap = Image.alpha_composite(detroitmap,legend)
     detroitmap = Image.composite(detroitmap, bg, detroitmap)
     detroitmap.save(f"map_{sid}/map.png") #output
 
-#used to display rankings    
+
+#used to display rankings
 async def int_to_roman(input):
-   if type(input) != type(1):
-      raise TypeError(f"expected integer, got {type(input)}")
-   if not 0 < input < 4000:
-      raise ValueError("Argument must be between 1 and 3999")   
-   ints = (1000, 900,  500, 400, 100,  90, 50,  40, 10,  9,   5,  4,   1)
-   nums = ('M',  'CM', 'D', 'CD','C', 'XC','L','XL','X','IX','V','IV','I')
-   result = ""
-   for i in range(len(ints)):
-      count = int(input / ints[i])
-      result += nums[i] * count
-      input -= ints[i] * count
-   return result
+    if not isinstance(input,int):
+        raise TypeError(f"expected integer, got {type(input)}")
+    if not 0 < input < 4000:
+        raise ValueError("Argument must be between 1 and 3999")
+    ints = (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+    nums = ('M', 'CM', 'D', 'CD','C', 'XC','L','XL','X','IX','V','IV','I')
+    result = ""
+    for i in range(len(ints)):
+        count = int(input / ints[i])
+        result += nums[i] * count
+        input -= ints[i] * count
+    return result
+
 
 #figure out which server this command runs on. Remind me to actually write server configs one day. One day. xd.
 async def sid(loc):
@@ -209,8 +221,16 @@ async def sid(loc):
         sid="undefined"
     return sid
 
+
+async def naming(guild,id):
+    usr= await guild.fetch_member(id)
+    return usr.display_name
+
+
 #Deals with special wounds that require more interaction. Most commonly used to roll the effects chains for critical wounds.
 specWounds=("Demolished","Cremated","Disintegrated (shock)","Iced Over","Whited Out","Devastated","Annihilated","Spreading","Infused")
+
+
 async def specialWounds(bot,ctx,case,f):
     ctx.invoked_with="wound"
     if case=="Demolished":
@@ -254,6 +274,7 @@ async def specialWounds(bot,ctx,case,f):
     elif (case=="Annihilated"):
         await ctx.invoke(roll,"3D7+0")
 
+
 #Translates wound severity from our shorthands back to the longer explicit version.
 async def severity_short(arg):
     if (arg=="lesser") or (arg=="les") or (arg=="l"):
@@ -265,15 +286,21 @@ async def severity_short(arg):
     else:
         print("Comprehension Error in severity_short")
 
+
 #check if a user is the bot itself
 def is_me(m):
     return m.author == bot.user
+
+
+def not_me(m):
+    return m.author != bot.user
 
 
 #global check to make sure blocked people can't mess around
 @bot.check
 def mute_user(ctx):
     return ctx.message.author.id not in muted_usr
+
 
 @bot.event
 async def on_member_join(member):
@@ -282,6 +309,7 @@ async def on_member_join(member):
     if (server=="gh") or (server=="test"):
         await own.send(f"New player joined {member.guild.name}: {member.name} \n Account creation on {member.created_at}")
 
+
 @bot.event
 async def on_member_remove(member):
     own = bot.get_user(owner[0])
@@ -289,8 +317,57 @@ async def on_member_remove(member):
     if (server=="gh") or (server=="test"):
         await own.send(f"{member.name} left {member.guild.name}")
 
-    
-@bot.command(  description="Makes the bot leave the server.",hidden=True)
+
+@bot.event
+async def on_message(message):
+    #function for having private chats people can declare stuff into
+    #deletes the postings in one channel, then sends them to a different one
+
+    try:
+        #checks-public 587718887936753710
+        #checks-private 587718930483773509
+
+        #test-beta 538633337191923714
+        #test-dev 435874236297379861
+        if not_me(message):
+            if message.channel.id==587718887936753710:
+                target=discord.utils.find(lambda m:m.id==587718930483773509,message.guild.channels)
+                await target.send(f"**{message.content}** sent by {message.author.name}, ID `{message.author.id}` at {message.created_at}")
+                await message.delete()
+
+            #custom messages. Mostly jokes.
+            elif message.content==("DOCTOR NEFARIOUS"):
+                await message.channel.send("🍋")
+            elif message.content==("Kingfisher, play Despacito"):
+                await message.channel.send("ɴᴏᴡ ᴘʟᴀʏɪɴɢ: Despacito \n ───────────────⚪─────────────────── \n  ◄◄⠀▐▐ ⠀►►⠀⠀ ⠀ 1:17 / 3:48 ⠀ ───○ 🔊⠀ ᴴᴰ ⚙ ❐ ⊏⊐")
+
+        await bot.process_commands(message)
+
+    except:
+        await bot.process_commands(message)
+
+
+@bot.event
+async def on_command_error(context, exception):
+        print(exception)
+        print(type(exception))
+
+        if hasattr(context.command, 'on_error'):
+            return
+
+        cog = context.cog
+        if cog:
+            if Cog._get_overridden_method(cog.cog_command_error) is not None:
+                return
+
+        if type(exception)==discord.ext.commands.errors.CommandOnCooldown:
+            await context.send(exception)
+
+        print('Ignoring exception in command {}:'.format(context.command), file=sys.stderr)
+        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
+
+
+@bot.command(description="Makes the bot leave the server.",hidden=True)
 async def order66(ctx):
     if ctx.message.author.id not in owner:
         await ctx.send("😰")
@@ -300,7 +377,8 @@ async def order66(ctx):
     await ctx.send("Macht’s gut, und danke für den Fisch.")
     await ctx.message.guild.leave()
 
-@bot.command(  description="Deletes all channels.",hidden=True)
+
+@bot.command(description="Deletes all channels.",hidden=True)
 async def order67(ctx):
     if ctx.message.author.id not in owner:
         await ctx.send("😰")
@@ -311,20 +389,22 @@ async def order67(ctx):
     #for i in chans:
     #   await i.delete()
 
-@bot.command(  description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
+
+@bot.command(description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
 async def nest(ctx):
     await ctx.send("https://discord.gg/gxQVAbA")
 
+
 #TODO: Conserve over restarts
-#TODO: ping all people who reacted the the reminder  
-@bot.command(  description="Reminds you of shit. Time should be specified as 13s37m42h12d leaving away time steps as desired.", aliases=["rem"])
+#TODO: ping all people who reacted the the reminder
+@bot.command(description="Reminds you of shit. Time should be specified as 13s37m42h12d leaving away time steps as desired.", aliases=["rem"])
 async def remind(ctx,time,*message):
     loop = asyncio.get_event_loop()
     timer=0
     chunk=re.compile("\d+[shmd]*")
     chunks=chunk.findall(time)
     #print(chunks)
-    for i in chunks:    
+    for i in chunks:
         if "s" in i:
             time=int(i[:-1])
             timer=timer+time
@@ -339,18 +419,19 @@ async def remind(ctx,time,*message):
             timer=timer+time
     await ctx.message.add_reaction('\N{Timer Clock}')
     content=f"{ctx.message.author.mention}: {' '.join(message)}"
-    sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe , argument=(ctx.message.channel.send(content,),loop,), kwargs={})
+    sPlanner.enter(timer, 10, asyncio.run_coroutine_threadsafe, argument=(ctx.message.channel.send(content,),loop,), kwargs={})
+
 
 @bot.command(description="Shuts the bot down. Owner only.",hidden=True)
 async def die(ctx):
     if ctx.message.author.id not in owner:
-        await ctx.send("No. Fuck off.") 
+        await ctx.send("No. Fuck off.")
         return
     global b_task
     global b_task2
     b_task.cancel()
     b_task2.cancel()
-    
+
     schedstop.set()
     reminders=[]
     #if sPlanner.empty()==False:
@@ -365,12 +446,14 @@ async def die(ctx):
 
     await bot.close()
 
-@bot.command(  description="Shuts the bot down. Owner only.",hidden=True)
+
+@bot.command(description="Shuts the bot down. Owner only.",hidden=True)
 async def diehard(ctx):
     if ctx.message.author.id not in owner:
-        await ctx.send("No. Fuck off.") 
+        await ctx.send("No. Fuck off.")
         return
     await bot.close()
+
 
 @bot.command(description="Ping people who reacted to a specific message.")
 async def qping(ctx,msg):
@@ -380,17 +463,18 @@ async def qping(ctx,msg):
         except:
             pass
             #print(f"{i.name} did not find message")
-    
+
     #message = await ctx.channel.fetch_message(int(msg))
     pinglist=""
     for i in message.reactions:
         async for user in i.users():
             pinglist=pinglist+(user.mention)+" "
     #print(pinglist)
-    await ctx.send(f"{ctx.author.nick} questpings {pinglist}")
+    await ctx.send(f"{ctx.author.display_name} questpings {pinglist}")
 
-#TODO: fix    
-@bot.command(  description="Used to send messages via Kingfisher to all servers.",hidden=True)
+
+#TODO: fix
+@bot.command(description="Used to send messages via Kingfisher to all servers.",hidden=True)
 async def announce(ctx,*message:str):
     if ctx.message.author.id not in owner:
         return
@@ -400,28 +484,29 @@ async def announce(ctx,*message:str):
     targets=[]
     for i in servs:
         await ctx.send(f"{i.name} {i.system_channel} {i.member_count}")
-        targets.append(i.system_channel) 
+        targets.append(i.system_channel)
     for i in targets:
         #await i.send(" ".join(message))
         return
-            
-    
-@bot.command(  description="Used to send messages via Kingfisher to a specific channel.",hidden=True)
+
+
+@bot.command(description="Used to send messages via Kingfisher to a specific channel.",hidden=True)
 async def tell(ctx,channel:int,*message:str):
     if ctx.message.author.id not in owner:
-        return  
+        return
     target=bot.get_channel(channel)
     await target.send(" ".join(message))
- 
-@bot.command( name='eval')
+
+
+@bot.command(name='eval')
 async def _eval(ctx, *, code):
     if ctx.message.author.id not in owner:
-        return 
+        return
     """A bad example of an eval command"""
     await ctx.send(eval(code))
-    
 
-@bot.command(  description="Refreshes the data from the reference docs. Owner only.",hidden=True)
+
+@bot.command(description="Refreshes the data from the reference docs. Owner only.",hidden=True)
 async def updateFeed(ctx):
     if ctx.message.author.id not in owner:
         await ctx.send("You weren't even a challenge.")
@@ -434,7 +519,7 @@ async def updateFeed(ctx):
     global triggerfeed
     credentials = ServiceAccountCredentials.from_json_keyfile_name('gspread.json', scope)
     gc = gspread.authorize(credentials)
-    RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
+    RefSheet = gc.open_by_key(reference)
     sheet = RefSheet.worksheet("Wounds")
     feed[0] = sheet.get_all_values()
     sheet_SD=RefSheet.worksheet("Wounds_SD")
@@ -454,8 +539,9 @@ async def updateFeed(ctx):
     triggerfeed = triggerSheet.get_all_values()
     await ctx.message.add_reaction("\U00002714")
 
+
 #fetch vials from the google sheet earlier for performance reasons. Then just format the stuff we're given. Easy. Has to account for some missing data.
-@bot.command(  description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.")
+@bot.command(description="Fetches vials from our vial sheet. Use *>vial* to roll a random vial, or *>vial Name* to look up a specific one.")
 async def vial(ctx, avial=None):
     global vialfeed
     n=0
@@ -468,15 +554,15 @@ async def vial(ctx, avial=None):
             vials[n].extend(vialfeed[i+2])
             n=n+1
 
-    if avial!=None:
+    if avial is not None:
         for i in range(0,len(vials)):
             if vials[i][0][:-1].casefold()==avial.casefold():
                 output=vials[i]
     else:
         out=random.randint(0,len(vials)-1)
         output=vials[out]
-    
-    if output==None:
+
+    if output is None:
         await ctx.send(f"Vial {avial} not found.")
         return
 
@@ -492,7 +578,8 @@ async def vial(ctx, avial=None):
         embed.add_field(name=f"Case #3", value=output[11],inline=False)
     await ctx.send(embed=embed)
 
-@bot.command(  description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Use *>perk start* to roll your starting perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
+
+@bot.command(description="Perks and flaws. Use *>perk* to roll perks, *>flaw* to roll flaws. *>perk life* and *>flaw life* for life perks. Use *>perk start* to roll your starting perks. Can also look up perks and flaws (*>perk profundum*). Can also use WD's *>luck*.",aliases=["flaw","luck"])
 async def perk(ctx, category=None):
     global perksfeed
     typus=0
@@ -502,7 +589,7 @@ async def perk(ctx, category=None):
     #5 flaw power
     typus_name=[None,None,"Perk Life","Perk Power","Flaw Life","Flaw Power"]
     typus_colour=[None,None,discord.Colour(0xB6D7A8),discord.Colour(0x93C47D),discord.Colour(0xEA9999),discord.Colour(0xE06666)]
-    
+
     if ctx.invoked_with.casefold()=="perk".casefold():
         #perk is column 2 and 3
         typus=typus+3
@@ -511,8 +598,8 @@ async def perk(ctx, category=None):
         typus=typus+5
     elif ctx.invoked_with.casefold()=="luck".casefold():
         category="luck"
-    
-    if (category==None) or (category=="power"):
+
+    if (category is None) or (category=="power"):
         category="power" #we default to power perks
     elif category=="luck":
         luck=[None, None]
@@ -556,14 +643,14 @@ async def perk(ctx, category=None):
                         except discord.HTTPException:
                             await ctx.send(perksfeed[i][typus])
         return
-    
+
     out=random.randint(1,len(perksfeed)-3) ##roll a random perk on the table
     while perksfeed[out][typus]=="":
         out=random.randint(1,len(perksfeed)-3) #re-pick when we rolled an empty cell
-    
+
     p_pattern=re.compile("(\w*\,?\s?\-?\/?\'?)+\.")
     p_match=p_pattern.search(perksfeed[out][typus])
-    
+
     #dealing with banned perks
     bannedperks=["alumnor", "excessus", "champion", "carnificina", "swellingpower", "evolution","Powersuffers,rawpowerisdecreased","counter","hardceiling","deadshard","finemmane"]
     while p_match.group()[:-1].casefold().replace(" ","") in bannedperks:
@@ -580,12 +667,12 @@ async def perk(ctx, category=None):
         await ctx.send(embed=embed)
     except discord.HTTPException:
         await ctx.send(perksfeed[out][typus])
-    
 
-@bot.command(  description="Roll augments. *>aug tinker*, or look up augs with *>aug tinker world*. You can see the short interpretation of the tarot card with *>aug world*",aliases=["aug"])
+
+@bot.command(description="Roll augments. *>aug tinker*, or look up augs with *>aug tinker world*. You can see the short interpretation of the tarot card with *>aug world*",aliases=["aug"])
 async def augment(ctx, classification=None, card=None):
     global augfeed
-    if classification==None:
+    if classification is None:
         await ctx.send("Need to know the classification. Blaster, Breaker, etc.")
         return
     augcolour=discord.Colour(0xBF9000)
@@ -595,7 +682,7 @@ async def augment(ctx, classification=None, card=None):
         await ctx.send(augfeed[cards.index(classification)+1][1])
         return
     augindex=classifications.index(classification.casefold())+2
-    if card==None:
+    if card is None:
         out=random.randint(1,len(augfeed)-1)
         if augfeed[out][augindex]!="":
             embed = discord.Embed(title=f"{classification.title()} Augment",description=augfeed[out][augindex],colour=augcolour)
@@ -611,16 +698,17 @@ async def augment(ctx, classification=None, card=None):
         for i in range(0,len(augs)):
             p_match=p_pattern.search(augs[i])
             if p_match:
-                if p_match.group()[:-1].casefold()==card.casefold(): 
+                if p_match.group()[:-1].casefold()==card.casefold():
                     await ctx.send(embed=discord.Embed(title=f"{classification.title()} Augment",description=augs[i],colour=augcolour))
                     return
                     #await ctx.send(augs[i])
         await ctx.send(f"No {card.title()} augment defined.")
 
-@bot.command(  description="Trigger warning.")
+
+@bot.command(description="Trigger warning.")
 async def trigger(ctx, id=None):
     global triggerfeed
-    if id==None:
+    if id is None:
         out=random.randint(0,len(triggerfeed))
         while triggerfeed[out][0]=="":
             out=random.randint(0,len(triggerfeed))
@@ -630,7 +718,7 @@ async def trigger(ctx, id=None):
         await ctx.send(f"Trigger #{id} by {triggerfeed[id-1][1]}: {triggerfeed[id-1][0]}")
 
 
-@bot.command(  description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
+@bot.command(description="Posts the google sheet document we use for our battle maps.", name="map", aliases=["maps"])
 async def _map(ctx):
     playmap="https://docs.google.com/spreadsheets/d/1sqorjpTOAHHON_jPipwyGDHYPEEfGR2hPTbpETSUfys/edit"
     playmap_gh="https://docs.google.com/spreadsheets/d/1lPJuANN3ZX2PPSHWHGlPVUkQqexP7YUtkBvLm1YlBPo/edit#gid=0"
@@ -639,8 +727,9 @@ async def _map(ctx):
     else:
         await ctx.send(playmap)
 
-@bot.command(  description="Use this command to claim squares on the map. Faction name needs to be spelled right. Use >claim to see the current map. Use >claim factions to see available factions")
-async def claim(ctx,faction = None,square:int = None):
+
+@bot.command(description="Use this command to claim squares on the map. Faction name needs to be spelled right. Use >claim to see the current map. Use >claim factions to see available factions")
+async def claim(ctx,faction=None,square:int = None):
     loc=ctx.message.guild.id  #465651565089259521 GH
     if loc==465651565089259521:
         sid="gh"
@@ -650,7 +739,7 @@ async def claim(ctx,faction = None,square:int = None):
         #await bot.send_message(discord.User(id=owner[0]),f"Claiming in {ctx.message.channel}: {ctx.message.author.name}")
         await ctx.send(f"Can only claim in #faction-actions!")
         return
-    
+
     cacher=random.randint(1, 100000000000)
     if faction=="factions":
         if sid=="gh":
@@ -659,10 +748,10 @@ async def claim(ctx,faction = None,square:int = None):
         elif sid=="test":
             await ctx.send(", ".join(list(gh_factions.keys())))
             return
-    elif faction == None and square == None:
+    elif faction is None and square is None:
         await ctx.send(f"https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
         return
-    elif faction != None and square == None:
+    elif faction is not None and square is None:
         await ctx.send("Correct format: >claim Faction Square")
     try:
         await mapUpdate(faction.casefold(),square,sid)
@@ -673,66 +762,167 @@ async def claim(ctx,faction = None,square:int = None):
     await ctx.send(f"Map updated. https://www.hivewiki.de/kingfisher/map_{sid}/map.png?nocaching={cacher}")
     #await bot.send_file(ctx.message.channel,'Detroit_map.png')
 
+
 @bot.command(description="Bullying.",hidden=True)
 async def worm(ctx,*args):
     await ctx.send("Take that, you 🐛")
-	
-@bot.command( description="Repeats famous catchphrases.")
+
+
+@bot.command(description="Repeats famous catchphrases.")
 async def lysa(ctx):
     sweat_emoji = discord.utils.get(bot.emojis, name='sweats')
     phraselist = ["oof", "Uh", "Wew", "Weary", "sweats", "Rip", "nice", "Unfortunate", sweat_emoji, "listen\nit's fine"]
-	
     await ctx.send(random.choice(phraselist))
 
-@bot.command(description="Create a copyeable link of your message.", aliases=["bm"])
+
+#await ctx.message.add_reaction("❌")
+#await ctx.message.add_reaction("✅")
+
+@bot.group(description=""" Make a copyable link of your message. Using *link* simply gives you a link.
+                            Sub-commands are Make, Add, Remove, Show, Owners. You need to first *make* a Bookmark, which is essentially a folder you will
+                            put links into via the *add* command. The add command will either create a link to your adding message, or it takes custom URLs.
+                            You can create multi-user bookmarks, too! Add your friends to collaborate onbookmarks via *owners*.""", aliases=["bm"])
 async def bookmark(ctx,):
+    if ctx.invoked_subcommand is None:
+        await ctx.send("You need to use a subcommand like >bm show, or use >help bm.")
+
+
+@bookmark.command(description="Gives the link of your selfsame message.",)
+async def link(ctx,title):
     await ctx.send(ctx.message.jump_url)
 
-# unsure if right 
-# '>eve' command variables inits 
-eve_max1 = 6
-eve_max2 = 5
-eve_f1 = []
-eve_f2 = []
-Eve_v = "v0.5 Eve"
-# Rolls 6d5 and 6d6 in two columns	
-@bot.command(  description="Everyone's personal rolls",hidden=True)
-async def eve(ctx, args = 0):
-    global eve_f1
-    global eve_f2
-    var = ""
-    if args == 1:
-        eve_f1 = []
-        for _ in range(6):
-            eve_f1.append(random.randint(1, eve_max1))
-        eve_f1.sort()
-        var ="1"
-    elif args == 2:
-        eve_f2 = []
-        for _ in range(6):
-            eve_f2.append(random.randint(1, eve_max2))
-        eve_f2.sort()
-        var ="2"	
-    elif args == 0:
-        eve_f1 = []
-        eve_f2 = []
-        for _ in range(6):
-            eve_f1.append(random.randint(1, eve_max1))
-        eve_f1.sort()
-        for _ in range(6):
-            eve_f2.append(random.randint(1, eve_max2))
-        eve_f2.sort()
-        var ="r"
-    elif args == 3:
-        var ="s"
-    
-    await ctx.send( f"-----**{var}**-----\n|{eve_f1[0]} {eve_f1[1]} |  {eve_f2[0]} {eve_f2[1]}|\n|{eve_f1[2]} {eve_f1[3]} |  {eve_f2[2]} {eve_f2[3]}|\n|{eve_f1[4]} {eve_f1[5]} |  {eve_f2[4]} {eve_f2[5]}|")
+
+@bookmark.command(description="Create a Bookmark to add links to. Needs a Title to identify it with!",)
+async def make(ctx,title):
+    new_bm=[{"Title":title,"Owners":[ctx.author.id],"Content":[]},]
+    with open(f"bm.yaml",mode="r+") as f:
+        old_bm=yaml.load(f)
+    for k in old_bm:
+        if k["Title"]==title:
+            await ctx.send(f"Title already taken!")
+            return
+    old_bm.extend(new_bm)
+    with open(f"bm.yaml",mode="w+") as f:
+        f.seek(0)
+        yaml.dump(old_bm,f)
+    await ctx.send(f"Successfully added {title} to bookmarks!")
+
+
+@bookmark.command(description="""Add links to your bookmark. Make sure to include the title of the bookmark you want to add it to, as well as
+                                a short comment identify this link. If no URL is given, the link defaults to your own message. You can also use any URL.
+                                Make sure it is formatted properly, including the http:// header!""", aliases=["a"])
+async def add(ctx,title,comment=None,url=None):
+    if comment is None:
+        await ctx.send("Comment is required!")
+        return
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+    for k in bm_feed:
+        for i,j in k.items():
+            if i=="Title" and j==title:
+                if ctx.author.id in k["Owners"]:
+                    if url is None:
+                        content={"Comment":comment,"URL":ctx.message.jump_url}
+                    else:
+                        content={"Comment":comment,"URL":url}
+                    k["Content"].append(content)
+                else:
+                    await ctx.send("Not your Bookmark!")
+                    return
+    with open(f"bm.yaml",mode="w+") as f:
+        f.seek(0)
+        yaml.dump(bm_feed,f)
+    await ctx.message.add_reaction("✅")
+
+
+@bookmark.command(description="""Remove links from your bookmark. Use this CAREFULLY!
+                                If you have multiple entries with the same comment, you *should* specify exactly which one should get deleted by also
+                                including the content.""",)
+async def remove(ctx,title,comment,content=False):
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+    for k in bm_feed:
+        if ctx.author.id in k["Owners"]:
+            if k["Title"]==title:
+                #k["Content"] is a (ordered set of) list containing the dict of the comment,url pairs
+                for i in k["Content"]:
+                    if i["Comment"]==comment:
+                        if i["Content"]==content or content is False:
+                            k["Content"].remove(i)
+        else:
+            await ctx.send("Not your Bookmark!")
+    with open(f"bm.yaml",mode="w+") as f:
+        f.seek(0)
+        yaml.dump(bm_feed,f)
+    await ctx.message.add_reaction("✅")
+
+
+@bookmark.command(description="Display a bookmark.", aliases=["s"])
+async def show(ctx,title):
+    bm_icon="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/google/146/bookmark_1f516.png"
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+        #print(bm_feed)
+    for k in bm_feed:
+        for i,j in k.items():
+            if i=="Title" and j==title:
+                embed = discord.Embed(title=title, colour=discord.Colour(0x6766b))
+
+                ownerstring=""
+                for o in k["Owners"]:
+                    try:
+                        usr=await bot.fetch_user(o)
+                        ownerstring=f"{ownerstring}, {usr.name}"
+                    except:
+                        ownerstring=f"{ownerstring}, Unknown"
+
+                embed.set_footer(text=f"Owners: {ownerstring[1:]}", icon_url=bm_icon)
+                #embed.set_footer(text=f"Owners: {', '.join(map(str,k['Owners']))}", icon_url=bm_icon)
+
+                #for each content, add content
+                i=1
+                for c in k["Content"]:
+                    embed.add_field(name=str(i),value=f"[{c['Comment']}]({c['URL']})")
+                    i=i+1
+                await ctx.send(embed=embed)
+                return
+
+
+@bookmark.command(description="""Add an owner to your bookmark. Needs their user ID, or their account name.
+                                Can also remove them by using the remove keyword.""",)
+async def owners(ctx,title,new_owner,remove="add"):
+    try:
+        new_owner_id=int(new_owner)
+    except ValueError:
+        try:
+            new_owner_id=ctx.guild.get_member_named(new_owner).id
+        except:
+            await ctx.send("I have no idea who you're trying to add. Try using their account name or ID.")
+            return
+    with open(f"bm.yaml",mode="r") as f:
+        bm_feed=yaml.load(f)
+    for k in bm_feed:
+        for i,j in k.items():
+            if i=="Title" and j==title:
+                if ctx.author.id in k["Owners"]:
+                    if remove=="remove":
+                        k["Owners"].remove(new_owner_id)
+                    else:
+                        k["Owners"].append(new_owner_id)
+                #else:
+                    #await ctx.send("Not your Bookmark!")
+    with open(f"bm.yaml",mode="w+") as f:
+        f.seek(0)
+        yaml.dump(bm_feed,f)
+    await ctx.message.add_reaction("✅")
+
 
 @bot.command(description="Forgot a simple URL? I got you.")
 async def wiki(ctx,*args):
     await ctx.send("https://www.hivewiki.de/start")
 
-@bot.command( description="Link a cape's vanwiki article.")
+
+@bot.command(description="Link a cape's hivewiki article.")
 async def cape(ctx,*cape):
     cape=str(cape).replace(" ", "_")
     cape="".join(cape)
@@ -756,16 +946,17 @@ async def cape(ctx,*cape):
         session.close
 
 
-@bot.command( description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
+@bot.command(description="Fetch a user's avatar. Follow your Jadmin dreams.\nFormatting is tricky, check that you're matching case. Copy the discriminator too.")
 async def avatar(ctx, user):
-    if user==None:
+    if user is None:
         await ctx.send(">avatar [name]")
     user=ctx.message.guild.get_member_named(user)
-    if user==None:
+    if user is None:
         await ctx.message.add_reaction("❌")
     await ctx.send(user.avatar_url)
 
-@bot.command( description="No more %vial 5.",hidden=True)
+
+@bot.command(description="No more %vial 5.",hidden=True)
 async def stopspam(ctx, i:int):
     if ctx.message.author.id not in owner:
         return
@@ -774,9 +965,9 @@ async def stopspam(ctx, i:int):
     except discord.Forbidden:
         await ctx.send("Insufficient priviliges.")
 
-#TODO: fix id
-@bot.command( description="Fuck you.",hidden=True)
-async def mute(ctx,usr): 
+
+@bot.command(description="Fuck you.",hidden=True)
+async def mute(ctx,usr):
     if ctx.message.author.id not in owner:
         await ctx.send("This would be a fun game. But you already lost.")
         return
@@ -785,7 +976,8 @@ async def mute(ctx,usr):
     await ctx.send("I told them. Warned them.")
     print(f"{usr} has been muted.")
 
-@bot.command( description="un-Fuck you.",hidden=True)
+
+@bot.command(description="un-Fuck you.",hidden=True)
 async def unmute(ctx,usr):
     if ctx.message.author.id not in owner:
         await ctx.send("No Release.")
@@ -795,7 +987,8 @@ async def unmute(ctx,usr):
     await ctx.send("Finally free.")
     print(f"{usr} has been unmuted.")
 
-@bot.command( description="Wer ist der Bürgermeister von Wesel?",hidden=True)
+
+@bot.command(description="Wer ist der Bürgermeister von Wesel?",hidden=True)
 async def echo(ctx,*echo):
     if ctx.message.author.id not in owner:
         await ctx.send("Esel, Esel!")
@@ -805,7 +998,8 @@ async def echo(ctx,*echo):
     print(ctx.message.channel.id)
     await ctx.send(" ".join(echo))
 
-@bot.command(  name="time",description="Stuck in bubble hell? Wonder when giao will be back?")
+
+@bot.command(name="time",description="Stuck in bubble hell? Wonder when giao will be back?")
 async def _time(ctx,):
     utc=datetime.datetime.now(tz=pytz.utc)
     hyper = pytz.timezone('Europe/Berlin')
@@ -848,145 +1042,154 @@ async def _time(ctx,):
     embed.add_field(name=f"Denver {mountain_dt.strftime(fmt_offset)}", value=mountain_dt.strftime(fmt), inline=True)
     embed.add_field(name=f"Seattle {pacific_dt.strftime(fmt_offset)}", value=pacific_dt.strftime(fmt), inline=True)
     embed.add_field(name=f"Canberra {aussies_dt.strftime(fmt_offset)}", value=aussies_dt.strftime(fmt), inline=True)
-    
+
     await ctx.send(embed=embed)
 
+
 #TODO: Better QoL, list options, better configuration
-@bot.command(  description="Gives (or removes) self-serve roles.")
+@bot.command(description="Gives (or removes) self-serve roles.")
 async def toggle(ctx, req_role="Active"):
     bye_emoji = discord.utils.get(bot.emojis, name='byedog')
     user = ctx.message.author
     loc=await sid(ctx.message.guild.id)
+    opproles=["RED","BLUE","DEEP","GOLD"]
     if req_role.casefold()=="Active".casefold():
         role = discord.utils.get(user.guild.roles, name="Active")
-        if role==None:
+        if role is None:
             await ctx.send("No Active role defined.")
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            await user.add_roles(role)
             await ctx.send("Remember, spamming 1v1s is punishable by death.")
-    
+
     elif req_role.casefold()=="Smithy".casefold():
         role = discord.utils.get(user.guild.roles, name="Smithy ⚔️")
-        if role==None:
+        if role is None:
             await ctx.send("No Smithy role defined.")
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            await user.add_roles(role)
             await ctx.send("Welcome to the Smithy.")
 
     elif (req_role.casefold()=="news".casefold()) and (loc=="test"):
         role = discord.utils.get(user.guild.roles, name="news")
-        if role==None:
+        if role is None:
             await ctx.send("No news role defined.")
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.send("Who reads this stuff anyways?")
         else:
-            await user.add_roles( role)
+            await user.add_roles(role)
             await ctx.send("All caught up.")
-            
+
     elif req_role.casefold()=="RED".casefold():
         role = discord.utils.get(user.guild.roles, name="RED")
-        opprole= discord.utils.get(user.guild.roles, name="BLUE")
-        if role==None:
+
+        if role is None:
             await ctx.send("No RED role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
+            await user.add_roles(role)
             await ctx.message.add_reaction("\U00002666")
             await ctx.send("Go Team Red Star!")
-            
+
     elif req_role.casefold()=="BLUE".casefold():
         role = discord.utils.get(user.guild.roles, name="BLUE")
-        opprole= discord.utils.get(user.guild.roles, name="RED")
-        if role==None:
+
+        if role is None:
             await ctx.send("No BLUE role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
+
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
+            await user.add_roles(role)
             await ctx.message.add_reaction("\U0001f6e1")
             await ctx.send("Go Team Blue Shield!")
 
     elif req_role.casefold()=="DEEP".casefold():
         role = discord.utils.get(user.guild.roles, name="DEEP")
-        opprole= discord.utils.get(user.guild.roles, name="RED")
-        if role==None:
+
+        if role is None:
             await ctx.send("No DEEP role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
+            await user.add_roles(role)
             await ctx.message.add_reaction("🌃")
             await ctx.send("To boldly go where no man has gone before.")
 
     elif req_role.casefold()=="GOLD".casefold():
         role = discord.utils.get(user.guild.roles, name="GOLD")
-        opprole= discord.utils.get(user.guild.roles, name="RED")
-        if role==None:
+        if role is None:
             await ctx.send("No GOLD role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
+            await user.add_roles(role)
             await ctx.message.add_reaction("🦅")
             await ctx.send("This is Gold Leader. Starting attack run.")
-    
+
     elif req_role.casefold()=="interlude".casefold():
         role = discord.utils.get(user.guild.roles, name="Interlude")
-        if role==None:
+        if role is None:
             await ctx.send("No Interlude role defined.")
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            await user.add_roles(role)
             await ctx.send("You can now post in #interludes. Role will be automatically revoked after an hour.")
             await asyncio.sleep(60*60*1)
-            await user.remove_roles( role)
-    
+            await user.remove_roles(role)
+
     elif (req_role.casefold()=="news".casefold()) and (loc=="gh"):
         role = discord.utils.get(user.guild.roles, name="News")
-        print(user.guild.roles)
-        if role==None:
+        #print(user.guild.roles)
+        if role is None:
             await ctx.send("No News role defined.")
         if role in user.roles:
-            await user.remove_roles( role)
+            await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
-            await user.add_roles( role)
+            await user.add_roles(role)
             await ctx.send("You can now post in #news-board. Role will be automatically revoked after 30 minutes.")
             await asyncio.sleep(60*30)
-            await user.remove_roles( role)
-            
-           
-    
+            await user.remove_roles(role)
+
+
 #Rolls wounds off of the Weaverdice wound table.
-@bot.command( aliases=["bash","pierce","cut","freeze","shock","rend","burn", "poison","armor","engine","wheel","system","structural"],
-                description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
-                 " Use >wound 'Hit Vitals' to find specific wounds.")
+@bot.command(aliases=["bash","pierce","cut","freeze","shock","rend","burn", "poison","armor","engine","wheel","system","structural"],
+             description="You like hurting people, huh? Use this to roll your wound effect. >Damage_Type Severity [Aim] [Number]"
+             " Use >wound 'Hit Vitals' to find specific wounds.")
 async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     loc=await sid(ctx.message.guild.id)
     #0 is wd20, 1 is skitterdice, 2 is original wd
@@ -995,25 +1198,25 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     elif loc=="detroit":
         f=1 #detroit uses skitterdice
     elif loc=="la" or loc=="gaming_inc" or loc=="autumn lane" or loc=="portland":
-        f=2 
+        f=2
     elif loc=="test":
         f=0
     else:
         f=0 #default is wd20
-    
+
     if aim.isdigit():
         repeats=int(aim)
         aim="Any"
-    
+
     if severity.isdigit():
         repeats=int(severity)
         severity="Moderate"
-    
+
     if repeats>8:
         if ctx.message.author.id not in owner:
             await ctx.send("/metalgearchittychittybangbang")
             return
-    
+
     if ctx.invoked_with.casefold() == "Bash".casefold():
         typ="Bash"
     elif ctx.invoked_with.casefold() == "Pierce".casefold():
@@ -1028,7 +1231,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         typ="Rend"
     elif ctx.invoked_with.casefold() == "Burn".casefold():
         typ="Burn"
-    
+
     elif ctx.invoked_with.casefold() == "Poison".casefold():
         typ="Poison"
     elif ctx.invoked_with.casefold() == "armor".casefold():
@@ -1041,7 +1244,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         typ="System"
     elif ctx.invoked_with.casefold() == "structural".casefold():
         typ="Structural"
-    
+
     if "typus" in typus: #kwarg
         typ=typus['typus']
     elif (ctx.invoked_with.casefold() == "Wound".casefold()) or (ctx.invoked_with.casefold() == "tag".casefold()):
@@ -1059,7 +1262,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
     shorthand=re.compile("\d[cml]")
     sm=shorthand.findall(severity)
     #what if nothing is found?
-    
+
     if len(sm)!=0:
         for i in range(0,len(sm)):
             repeatlist.append(int(sm[i][0]))
@@ -1068,7 +1271,7 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         repeatlist.append(repeats)
         severitylist.append(severity)
         sm=["def"]
-    
+
     for j in range(0,len(sm)):
         severity= await severity_short(severitylist[j].casefold())
         exclusive=False
@@ -1097,17 +1300,17 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
         for i in feed[f]:
             if i[0].casefold()==typ.casefold():
                 if i[1].casefold()==severity.casefold():
-                    if exclusive==True:
+                    if exclusive is True:
                         if (i[2].casefold()==aimt.casefold()):
                             typlist.append(i)
-                    elif limbaim==True:
+                    elif limbaim is True:
                         if i[2].casefold() in ["arm","legs"]:
                             typlist.append(i)
-                    elif (i[2].casefold()==aimt.casefold()) or (aimt=="Any") or (i[2]=="Any"):
+                    elif (i[2].casefold()==aimt.casefold()) or (aimt.casefold()=="Any".casefold()) or (i[2]=="Any"):
                         typlist.append(i)
         embed=[]
         if "title" in typus:
-             embed = discord.Embed(title=typus["title"],colour=discord.Colour(typ_colours[typ]))
+            embed = discord.Embed(title=typus["title"],colour=discord.Colour(typ_colours[typ]))
         else:
             embed = discord.Embed(colour=discord.Colour(typ_colours[typ]))
         if "tag" in typus:
@@ -1116,25 +1319,26 @@ async def wound(ctx, severity="Moderate", aim="Any", repeats=1,**typus):
             embed.set_footer(text=f"Rolled for {ctx.message.author.name} | {severity} {aim.casefold()} {repeatlist[j]}",icon_url=ctx.message.author.avatar_url)
         damages=[]
         for _ in range(0,repeatlist[j]):
-             luck=random.randint(0,len(typlist)-1)
-             damages.append(typlist[luck])
-             embed.add_field(name=typlist[luck][3], value=f"{typlist[luck][4]}\n*Location: {typlist[luck][2]}, Stage: {typlist[luck][1]}*", inline=False)
+            luck=random.randint(0,len(typlist)-1)
+            damages.append(typlist[luck])
+            embed.add_field(name=typlist[luck][3], value=f"{typlist[luck][4]}\n*Location: {typlist[luck][2]}, Stage: {typlist[luck][1]}*", inline=False)
         await ctx.send(embed=embed)
         for i in damages:
             if i[3] in specWounds:
-                 await specialWounds(bot,ctx,i[3],f)
-             #embed.add_field(name="Severity", value=severity, inline=True)
-             #embed.add_field(name="Aim", value=aim, inline=True)
+                await specialWounds(bot,ctx,i[3],f)
+            #embed.add_field(name="Severity", value=severity, inline=True)
+            #embed.add_field(name="Aim", value=aim, inline=True)
     return True
 
 
-@bot.group( description="Save macros for use with the >roll function. Usage is >macro save $title 3d20+4 3d6x4 #comment - then use >roll $title.\
+@bot.group(description="Save macros for use with the >roll function. Usage is >macro save $title 3d20+4 3d6x4 #comment - then use >roll $title.\
  Nb that each word in the comment has to be preceded by the # sign!",alias="m")
 async def macro(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send('Available commands: save, delete, update, show.')
 
-@macro.command( )
+
+@macro.command()
 async def save(ctx,title,*formulas):
     global macros
     if not title[0]=="$":
@@ -1142,7 +1346,7 @@ async def save(ctx,title,*formulas):
         return
     user=ctx.message.author.id
     user=str(user)
-    if not user in macros:
+    if user not in macros:
         macros[user]={}
     macros[user][title]=[]
     for i in formulas:
@@ -1160,7 +1364,8 @@ async def save(ctx,title,*formulas):
     await ctx.send(f"{title} has been saved.")
     return
 
-@macro.command( )
+
+@macro.command()
 async def delete(ctx,title):
     global macros
     user=ctx.message.author.id
@@ -1171,7 +1376,8 @@ async def delete(ctx,title):
         json.dump(macros,f)
     return
 
-@macro.command( )
+
+@macro.command()
 async def update(ctx,title,*formulas):
     global macros
     user=ctx.message.author.id
@@ -1193,7 +1399,8 @@ async def update(ctx,title,*formulas):
     await ctx.send(f"{title} has been updated.")
     return
 
-@macro.command( )
+
+@macro.command()
 async def show(ctx,title=None,user=None):
     user=ctx.message.author.id
     user=str(user)
@@ -1203,13 +1410,13 @@ async def show(ctx,title=None,user=None):
     await ctx.send(f"Saved macros for {ctx.message.author.name} are:\n{''.join(macro_list)}")
     return
 
+
 #dice rolling.
-#TODO: independent dice
-@bot.command( description="See >tag roll for help",aliases=["r"])
+@bot.command(description="See >tag roll for help",aliases=["r"])
 async def roll(ctx,formula="default",*comment):
     loc=ctx.message.guild.id
     s_id = await sid(loc)
-    
+
     if formula[0]=="$":
         user=str(ctx.message.author.id)
         if formula in macros[user]:
@@ -1221,8 +1428,6 @@ async def roll(ctx,formula="default",*comment):
                     await ctx.invoke(roll,formula=i)
         return
     formula_in=formula
-    
-    
 
     if comment==():
         comment=""
@@ -1238,7 +1443,7 @@ async def roll(ctx,formula="default",*comment):
         formula="1d6"
     elif formula=="default":
         formula="3d20+4"
-    
+
     if "d" in formula.casefold():
         d_pattern=re.compile("(d|D)(\d)*")
         d_match=d_pattern.search(formula)
@@ -1246,7 +1451,7 @@ async def roll(ctx,formula="default",*comment):
             keep=False
         else:
             keep=True
-        dice=int(d_match.group()[1:])   
+        dice=int(d_match.group()[1:])
     else:
         if "c" in formula.casefold():
             dice=10
@@ -1258,12 +1463,12 @@ async def roll(ctx,formula="default",*comment):
                 dice=20
             keep=True
     #print(f"dice: {dice}")
-    
+
     if ("+" in formula) or ("-" in formula):
         if ("++" in formula) or ("--" in formula):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
             mod_match=mod_pattern.search(formula)
-            modifier=int(mod_match.group()[1:]) 
+            modifier=int(mod_match.group()[1:])
             modifier=4+modifier
         else:
             mod_pattern=re.compile("(\+|\-)+(\d)*")
@@ -1275,7 +1480,7 @@ async def roll(ctx,formula="default",*comment):
         else:
             modifier=0
     #print(f"modifier: {modifier}")
-    
+
     brief=False
     if "b" in formula:
         brief=True
@@ -1295,7 +1500,7 @@ async def roll(ctx,formula="default",*comment):
     else:
         repeats=1
     #print(f"repeats: {repeats}")
-    
+
     i_pattern=re.compile("(\A)(\d)*")
     i_match=i_pattern.search(formula)
     if i_match:
@@ -1315,22 +1520,28 @@ async def roll(ctx,formula="default",*comment):
         print("i-error in roll!")
         return
     #print(f"die #s: {i}")
-          
+
     if "!" in formula:
         explode=True
     else:
         explode=False
-    
+
     requester=ctx.message.author.name
     out_roll=[f"{requester}: ("]
-    
+
+    #print(repeats)
+    #print(dice)
+    #print(i)
+    if (repeats>10e3) or (dice>10e3) or (i>10e3):
+        await ctx.send("BRB, driving to the dice store. Oh no, looks like they're all out of dice, just like I am of fucks to give about your spammy rolls.")
+        return
     for j in range(0,repeats):
         if (j!=0):
             out_roll.append(", (")
         result=[]
         for x in range(0,i):
             result.append(random.randint(1,dice))
-        if explode==True:
+        if explode is True:
             loops=len(result)
             k=0
             while (k < loops):
@@ -1342,16 +1553,16 @@ async def roll(ctx,formula="default",*comment):
                 if k>100: #save us from infinite loops
                     break
         result_i= [int(i) for i in result]
-        
-        if keep==True:
+
+        if keep is True:
             highest=max(result_i)
         else:
             highest=sum(result)
         #print(keep)
-        if keep==True:
+        if keep is True:
             for x in range(0,len(result_i)):
                 if result_i[x]!=highest:
-                    if keep==True:
+                    if keep is True:
                         out_roll.append("~~")
                         out_roll.append(str(result_i[x]))
                         out_roll.append("~~")
@@ -1370,7 +1581,7 @@ async def roll(ctx,formula="default",*comment):
         out_roll.append(")")
         if modifier>0:
             out_roll.append("+")
-        if dice==20 and highest==20:
+        if dice==highest:
             if modifier != 0:
                 out_roll.append(f"{modifier}=__**{highest+modifier}**__")
             else:
@@ -1380,7 +1591,7 @@ async def roll(ctx,formula="default",*comment):
         else:
             out_roll.append(f"{modifier}=**{highest+modifier}**")
         #print(out_roll)
-    if brief==True:
+    if brief is True:
         out_saved=out_roll
         out_roll=[f"{requester}: "]
         brief_pattern=re.compile("\*\*-*\d+\*\*")
@@ -1404,23 +1615,28 @@ async def roll(ctx,formula="default",*comment):
 
 tag_muted=False #global
 
+
 #tags are text blocks, useful for re-posting common infomration like character appearance etc. Also memes. So many memes.
-@bot.command( description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","t"])
+@bot.command(description="Memorize Texts. Add a tag by writing >tag create title content; update by >tag update title newcontent; delete by >tag delete title",aliases=["effect","t"])
 async def tag(ctx, tag=None, content1=None, *,content2=None):
     global tags
-    if (tag==None) or (tag.casefold()=="empty"):
+    if (tag is None) or (tag.casefold()=="empty"):
         await ctx.message.add_reaction("❌")
-    elif tag.casefold()=="create".casefold():
+    elif tag.casefold()=="create".casefold() or tag.casefold()=="make".casefold():
         global tag_muted
-        if tag_muted==True:
+        if tag_muted is True:
             await ctx.send("Disabled until you fuckers calm down.")
             return
-        elif (content1==None) or (content2==None):
+        elif (content1 is None) or (content2 is None):
             await ctx.send("Need a name and content for the tag.")
             return
         elif any(e[0].casefold() == content1.casefold() for e in tags):
             await ctx.send("Name already taken.")
             return
+        if "@everyone" in content2 or "@here" in content2:
+            await ctx.send("How about you don't try that.")
+            return
+
         gc = gspread.authorize(credentials)
         RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
         tagsSheet = RefSheet.worksheet("Tags")
@@ -1431,7 +1647,7 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
         tagsSheet.update_cell(new_tag.row+1,new_tag.col, "empty")
         tags = tagsSheet.get_all_values()
         await ctx.send(f"{content1} has been created.")
-    elif tag_muted==False:
+    elif tag_muted is False:
         if tag.casefold()=="list":
             await ctx.send("List of all current tags: https://docs.google.com/spreadsheets/d/e/2PACX-1vRjroKacZBQrkIEayrhHuFtA_5mAL_C48Y-4taCjZ5k0mNXAPTi5diZAiZ-7l-Uai5xvbNomF_s1-0m/pubhtml")
         elif tag.casefold()=="owner":
@@ -1444,6 +1660,8 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
                 await ctx.send(f"Tag not found!")
                 return
             ownerID=tagsSheet.cell(target_tag.row,target_tag.col+2).value
+            #print(f"{ownerID} in {target_tag.row}")
+            #print("hello?")
             tagowner=discord.utils.get(bot.get_all_members(), id=int(ownerID))
             if tagowner is None:
                 await ctx.send(f"{content1} is owned by an unknown user.")
@@ -1462,6 +1680,9 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             else:
                 await ctx.send("Not your tag!")
         elif tag.casefold()=="update":
+            if "@everyone" in content2 or "@here" in content2:
+                await ctx.send("How about you don't try that.")
+                return
             gc = gspread.authorize(credentials)
             RefSheet = gc.open_by_key('1LOZkywwxIWR41e8h-xIMFGNGMe7Ro2cOYBez_xWm6iU')
             tagsSheet = RefSheet.worksheet("Tags")
@@ -1483,24 +1704,26 @@ async def tag(ctx, tag=None, content1=None, *,content2=None):
             if not (await ctx.invoke(wound,severity=str(tag))):
                 await ctx.message.add_reaction("❌")
 
+
 #Can use this to stop tag abuse
-@bot.command( hidden=True)
+@bot.command(hidden=True)
 async def tagToggle(ctx):
     global tag_muted
     if ctx.message.author.id not in owner:
         await ctx.send("🌚")
         return
-    if tag_muted==False:
+    if tag_muted is False:
         tag_muted=True
         await ctx.message.add_reaction("🔥")
-    elif tag_muted==True:
+    elif tag_muted is True:
         tag_muted=False
         await ctx.message.add_reaction("🌊")
     else:
         await ctx.send("Beep Boop. Error.")
 
-#convert from inches to cm. Very, very basic. 
-@bot.command( aliases=["conv"],description="Fuck the Imperial System.")
+
+#convert from inches to cm. Very, very basic.
+@bot.command(aliases=["conv"],description="Fuck the Imperial System.")
 async def convert(ctx, inches):
     ft_symbol="'"
     ft = inches.find(ft_symbol)
@@ -1512,6 +1735,251 @@ async def convert(ctx, inches):
         inch=int(inches)
     await ctx.send(f"{inches} is equal to {inch*2.54}cm")
 
+####################
+#Turn Tracker module
+####################
+turn_tracker={}
+
+# The turn tracker allows you to keep combat flowing by automatically pinging people when it is their turn.
+# First, everyone enters their initiative score by using >init 11
+# If two people need to roll off (say both roll an 11), the winner of the rolloff should enter their initiative as 11.5
+# Once everyone has entered their score, simply use >start to get going!
+# if you have finished your turn, simply use >end
+# When your fight is done, use >clear to empty the initiative queue
+
+
+@bot.command(description="""The turn tracker allows you to keep combat flowing by automatically pinging people when it is their turn.
+                    First, everyone enters their initiative score by using >init 11 etc.
+                    If two people need to roll off (say both roll an 11), the winner of the rolloff should enter their initiative as 11.5
+                    Once everyone has entered their score, simply use >start to get going!
+                    If you have finished your turn, simply use >end
+
+                    You can remove people (like KO'd characters) by using the >kick command on their turn, or entering their name.
+
+                    When your fight is done, use >clear to empty the initiative queue
+
+                    You can set reminders (e.g. willpowered wounds returning in 2 rounds) by using >turn 2 wp expires
+
+                    This also supports re-shuffling init in the middle of a fight.
+
+                    If you are a QG, you can add NPCs via *>init 11 NPC1* (beta)
+                    """)
+async def init(ctx, score:float, alias=None):
+    chan=ctx.channel.id
+    global turn_tracker
+    if chan in turn_tracker.keys():
+        if alias is None:
+            a_id=ctx.author.id
+        else:
+            a_id=alias
+        turn_tracker[chan]["init"].update({a_id:score})
+    else:
+        if alias is None:
+            turn_tracker[chan]={"init":{ctx.author.id:score},"turn":0,"round":1,"started":False}
+        else:
+            turn_tracker[chan]={"init":{alias:score},"turn":0,"round":1,"started":False}
+    await ctx.message.add_reaction("✅")
+    #print(sorted(turn_tracker[chan]["init"].items(), key=lambda x:x[1],reverse=True))
+    #print(turn_tracker)
+
+
+@bot.command(description="Once everyone has entered their score, simply use >start to get going!")
+async def start(ctx):
+    chan=ctx.channel.id
+    global turn_tracker
+    turn_tracker[chan]["order"]=sorted(turn_tracker[chan]["init"].items(), key=operator.itemgetter(1),reverse=True)
+    turn_tracker[chan]["started"]=True
+    cur_turn=turn_tracker[chan]["turn"]
+    cur_round=turn_tracker[chan]["round"]
+    #await ctx.invoke(end,"True",start)
+    if cur_round==1 and cur_turn==0:
+        await ctx.send(f"<@!{turn_tracker[chan]['order'][cur_turn][0]}> goes first!")
+        turn_tracker[chan].update({"turn":cur_turn+1})
+
+
+@bot.command(description="Once you have finished your turn, simply use >end")
+async def end(ctx, force=False,invoked=False,): #start=False
+
+    chan=ctx.channel.id
+    cur_turn=turn_tracker[chan]["turn"]
+    rem_turn=cur_turn
+    cur_round=turn_tracker[chan]["round"]
+    #print(f"end: cur_turn {cur_turn} cur_round {cur_round}")
+    if invoked is False:
+        if turn_tracker[chan]['order'][cur_turn-1][0]!=ctx.author.id and force is False:
+            await ctx.send("Not your turn! If player is afk or else, use >end True")
+            return
+
+    if turn_tracker[chan]["turn"]>=len(turn_tracker[chan]["order"]):
+        turn_tracker[chan].update({"round":cur_round+1})
+        await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
+        turn_tracker[chan].update({"turn":0})
+
+        cur_turn=turn_tracker[chan]["turn"]
+        cur_round=turn_tracker[chan]["round"]
+        rem_turn=cur_turn
+
+    await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
+
+    #turn reminder logic
+    if "reminder" in turn_tracker[chan]:
+        for i in turn_tracker[chan]["reminder"]:
+
+            #print(f"cur_turn {cur_turn} rem_turn {rem_turn} looking for {i[3]}")
+            #print(f"round {cur_round} looking for {i[1]}")
+
+            if (i[3]==rem_turn) and (i[1]==cur_round):
+                name=await naming(ctx.guild,i[0])
+                await ctx.send(f"Reminder for {name} {i[2]}")
+                turn_tracker[chan]["reminder"].remove(i)
+
+    turn_tracker[chan].update({"turn":cur_turn+1})
+    #print(f"end2: cur_turn {cur_turn} cur_round {cur_round}")
+    #print("--------")
+
+
+@bot.command(description="Shows current Initiative order. Use *>show init* to check what re*>start*ing would look like.")
+async def show(ctx,init="False"):
+    chan=ctx.channel.id
+
+    #print(turn_tracker[chan])
+    init_list=[]
+    init_str=""
+
+    order_list=[]
+    order_str=""
+
+    if (turn_tracker[chan]["started"] is False) or init.casefold()=="init":
+        for i,j in turn_tracker[chan]["init"].items():
+            init_list.append((i,j))
+        #print(init_list)
+        init_list.sort(key=itemgetter(1),reverse=True)
+        init_list=list(enumerate(init_list,1))
+        init_str=[f"Init so far:"+os.linesep]
+        for i in init_list:
+            try:
+                usr= await ctx.guild.fetch_member(i[1][0])
+            except:
+                usr=i[1][0]
+            #print(type(usr))
+            if isinstance(usr, discord.member.Member):
+                init_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
+            else:
+                init_str+=((f"**{i[0]}**. {usr}  *{i[1][1]}*"+os.linesep))
+        init_str=''.join(init_str)
+        await ctx.send(init_str)
+
+    if turn_tracker[chan]["started"] is True:
+        for i in turn_tracker[chan]["order"]:
+            order_list.append((i[0],i[1]))
+        order_list=list(enumerate(order_list,1))
+        order_str=[f"Current Init order in {ctx.message.channel.name}"+os.linesep]
+        for i in order_list:
+            try:
+                usr= await ctx.guild.fetch_member(i[1][0])
+            except:
+                usr=i[1][0]
+            if isinstance(usr, discord.member.Member):
+                order_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
+            else:
+                order_str+=((f"**{i[0]}**. {usr}  *{i[1][1]}*"+os.linesep))
+        order_str=''.join(order_str)
+        await ctx.send(order_str)
+
+    #init_list+f"{i}"+os.linesep
+
+
+@bot.command(description="You can remove people (like KO'd characters) by using the >kick command on their turn, or entering their name.")
+@commands.cooldown(1,10,commands.BucketType.channel)
+async def kick(ctx,*user):
+    #kick whoevers turn it is by default
+    chan=ctx.channel.id
+    global turn_tracker
+
+    if user==():
+        cur_turn=turn_tracker[chan]["turn"]
+        for i in turn_tracker[chan]["order"]:
+            if turn_tracker[chan]['order'][cur_turn-1][0]==i[0]:
+                turn_tracker[chan]["order"].remove(i)
+                await ctx.message.add_reaction("✅")
+                turn_tracker[chan]["turn"]-=1
+                await ctx.invoke(end,"True",True)
+                # making sure the turns move on correctly
+                # if turn_tracker[chan]["turn"]>=len(turn_tracker[chan]["order"]):
+                #     turn_tracker[chan].update({"round":cur_round+1})
+                #     await ctx.send(f"Round {turn_tracker[chan]['round']} begins.")
+                #     turn_tracker[chan].update({"turn":0})
+                #     cur_turn=turn_tracker[chan]["turn"]
+
+                # await ctx.send(f"Turn {turn_tracker[chan]['round']} for <@!{turn_tracker[chan]['order'][cur_turn][0]}>")
+                # turn_tracker[chan].update({"turn":cur_turn+1})
+
+                return
+
+    user=" ".join(user)
+    #usr to id
+    #id
+    usr=None
+    try:
+        usr_int=int(user)
+        usr = ctx.guild.get_member(usr_int)
+    except:
+        pass
+
+    #nick
+    try:
+        if usr is None:
+            usr = ctx.guild.get_member_named(user)
+    except:
+        pass
+
+    if usr is None:
+        await ctx.send("No fucking clue who that is.")
+        return
+    #ping
+    for i in turn_tracker[chan]["order"]:
+        if usr.id==i[0]:
+            turn_tracker[chan]["order"].remove(i)
+            turn_tracker[chan]["turn"]-=1
+            await ctx.send(f"<@!{usr.id}> has been removed on Turn {turn_tracker[chan]['turn']}, Round {turn_tracker[chan]['round']}")
+            return
+
+
+@bot.command(description="When your fight is done, use >clear to empty the initiative queue", aliases=["gg"])
+async def clear(ctx,):
+    chan=ctx.channel.id
+    global turn_tracker
+    del turn_tracker[chan]
+    await ctx.send("gg")
+
+
+@bot.command(description="You can set reminders (e.g. willpowered wounds returning in 2 rounds) by using >turn 2 wp expires.")
+async def turn(ctx,number:int,*comment):
+    chan=ctx.channel.id
+    usr=ctx.author
+
+    global turn_tracker
+
+    comment=" ".join(comment)
+    cur_round=turn_tracker[chan]["round"]
+    cur_turn=turn_tracker[chan]["turn"]
+    #if cur_round==1 and cur_turn==1:
+    #cur_round=cur_round-1
+    if "reminder" in turn_tracker[chan]:
+        turn_tracker[chan]["reminder"].append((usr.id,cur_round+number,comment,cur_turn-1))
+    else:
+        turn_tracker[chan].update({"reminder":[(usr.id,cur_round+number,comment,cur_turn-1)]})
+    await ctx.message.add_reaction("✅")
+
+
+#################
+#New Skill module
+@bot.group()
+async def rank2(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send('Available commands: show, make, update')
+
+
 #TODO: Replace with trueSkill
 #GLICKO MODUlE
 #defining parameters for the glicko system
@@ -1521,14 +1989,16 @@ tau=0.3
 #-------------
 test="test"
 
-@bot.group( )
+
+@bot.group()
 async def rank(ctx):
     if ctx.invoked_subcommand is None:
-        await ctx.send('Available commands: show, make, update')
-        
-@rank.command( )
+        await ctx.send('Available commands: show, make, update, ladder')
+
+
+@rank.command()
 async def ladder(ctx, mode="lax"):
-    loc=ctx.message.guild.id        
+    loc=ctx.message.guild.id
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
     sort_rank=sorted(rankings,key=operator.itemgetter(1), reverse=True)
@@ -1536,7 +2006,7 @@ async def ladder(ctx, mode="lax"):
     if mode.casefold()=="strict":
         RD_cutoff=100
     elif mode.casefold()=="lax":
-        RD_cutoff=200    
+        RD_cutoff=200
     else:
         try:
             RD_cutoff=int(mode)
@@ -1554,14 +2024,12 @@ async def ladder(ctx, mode="lax"):
     ladder_str+=f"_Only capes under {RD_cutoff} RD are included here. NB this only reflects 1v1 performance._"
     await ctx.send(ladder_str)
 
-        
-        
-    
-@rank.command( )
+
+@rank.command()
 async def show(ctx, cape=None):
     loc=ctx.message.guild.id
-    if cape==None:
-        await ctx.send(f"Forgot something? Maybe your name, {ctx.message.author.nick}?")
+    if cape is None:
+        await ctx.send(f"Forgot something? Maybe your name, {ctx.message.author.display_name}?")
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
     #print(rankings)
@@ -1571,16 +2039,17 @@ async def show(ctx, cape=None):
             return
     await ctx.send(f"{cape} not found.")
     #print(rankings)
-    
-@rank.command( name="help")
+
+
+@rank.command(name="help")
 async def _help(ctx,cape=None):
     await ctx.send("To enter your cape into the database, use "">rank make halcyon"". If you finish a fight, use "">rank update luke vader win"". In this one, luke won against vader. If luke had lost, you would write "">rank update luke vader loss"". Only one person needs to do this, the other's rank is updated automatically. You can see your rating by using "">rank show halcyon"". This is still a pretty early build, so expect bugs and shit. Consider this a beta that will probably get wiped at some point.")
-    
 
-@rank.command( )
+
+@rank.command(aliases=["create"])
 async def make(ctx,cape=None):
     loc=ctx.message.guild.id
-    if cape==None:
+    if cape is None:
         await ctx.send("I do need a name for you if this is going to work.")
     entry=[]
     cape=cape.casefold()
@@ -1599,16 +2068,17 @@ async def make(ctx,cape=None):
             rankings.append(entry)
             json.dump(rankings,f)
     else:
-         with open(f"glicko{loc}.txt",mode="w+") as f:
-             rankings=[]
-             f.seek(0)
-             f.truncate()
-             rankings.append(entry)
-             json.dump(rankings,f)
+        with open(f"glicko{loc}.txt",mode="w+") as f:
+            rankings=[]
+            f.seek(0)
+            f.truncate()
+            rankings.append(entry)
+            json.dump(rankings,f)
     await ctx.send(f"{cape} added to database. Rating: 1500")
     #print(rankings)
-    
-@rank.command( )
+
+
+@rank.command()
 async def odds(ctx,cape1,cape2):
     loc=ctx.message.guild.id
     with open(f"glicko{loc}.txt") as f:
@@ -1620,19 +2090,21 @@ async def odds(ctx,cape1,cape2):
             c1=i
         if i[0]==cape2.casefold():
             c2=i
-    if c1==False:
+    if c1 is False:
         await ctx.send(f"Cannot find {cape1}.")
         return
-    elif  c2==False:
+    elif c2 is False:
         await ctx.send(f"Cannot find {cape2}.")
         return
     rating_cape=c1[1]
     rd_cape=c1[2]
     rating_opponent=c2[1]
     rd_opponent=c2[2]
+
     def g(rd):
         q=math.log(10)/400
         return 1/math.sqrt(1+3*(q**2)*(rd**2)/(math.pi**2))
+
     #print(g(math.sqrt(rd_cape**2+rd_opponent**2)))
     e=1/(1+10**(-g(math.sqrt(rd_cape**2+rd_opponent**2))*(rating_cape-rating_opponent)/400))
     prob=round(e*100,0)
@@ -1652,6 +2124,9 @@ async def update(ctx,cape, opponent, outcome,inv=False):
             outcome=0
         else:
             outcome=int(outcome)
+            if outcome!=1 and outcome!=0:
+                await ctx.send("Outcome must be win or loss!")
+                return
     #print(f"Start: {outcome}, {inv}, {cape}, {opponent}")
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
@@ -1662,10 +2137,10 @@ async def update(ctx,cape, opponent, outcome,inv=False):
             c1=i
         elif i[0]==opponent.casefold():
             c2=i
-    if c1==False:
+    if c1 is False:
         await ctx.send(f"Cannot find {cape}.")
         return
-    elif  c2==False:
+    elif c2 is False:
         await ctx.send(f"Cannot find {opponent}.")
         return
     rating_cape=(c1[1]-1500)/scale
@@ -1680,20 +2155,19 @@ async def update(ctx,cape, opponent, outcome,inv=False):
     #print(f"E: {e} by {-g_phi_op}*({rating_cape}-{rating_opponent})")
     variance=1/((g_phi_op**2*e*(1-e)))
     #print(f"variance is {variance}")
-    
+
     if variance>6:
         #print(f"variance corrected from {variance}")
         variance=6
-        
-    
-    
+
     #change in rating, based on outcomes only
     delta=variance*(g_phi_op*(outcome-e))
     #print(f"delta is {delta} via {variance}*({g_phi_op}*({outcome}-{e}))")
-    
+
     #new sigma
     a=math.log(vola_cape**2)
     epsilon=0.000001
+
     def f(x):
         result=(math.exp(x)*(delta**2-rd_cape**2-variance-math.exp(x))/2*(rd_cape**2+variance+math.exp(x))**2)-((x-a)/tau**2)
         return result
@@ -1708,7 +2182,7 @@ async def update(ctx,cape, opponent, outcome,inv=False):
         #print("smol delta")
         while (f(a-k*tau)<0):
             k+=1
-        b=a-k*tau  
+        b=a-k*tau
     else:
         print("ERROR in volatility update")
         return
@@ -1724,7 +2198,7 @@ async def update(ctx,cape, opponent, outcome,inv=False):
         b=c
         f_b=f_c
     sigma_new=math.exp(alpha/2)
-    
+
     rd_period=math.sqrt(rd_cape**2+sigma_new**2)
     rd_new=1/(math.sqrt((1/rd_period**2)+(1/variance)))
     rating_new=rating_cape+((rd_new**2)*(g_phi_op*(outcome-e)))
@@ -1732,15 +2206,15 @@ async def update(ctx,cape, opponent, outcome,inv=False):
     rd_new=scale*rd_new
     rating_new=(scale*rating_new)+1500
     up_func=bot.get_command("rank update")
-    
-    if inv==False:
+
+    if inv is False:
         await ctx.invoke(up_func,cape=opponent,opponent=cape,outcome=abs(1-outcome),inv=True)
     #capename, ranking, RD, volatility
-    
+
     #is RD is over 350, reset to the maximum of 350
     if rd_new>350:
         rd_new=350
-    
+
     with open(f"glicko{loc}.txt") as f:
         rankings = json.load(f)
     for i in rankings:
@@ -1749,29 +2223,31 @@ async def update(ctx,cape, opponent, outcome,inv=False):
             i[2]=rd_new
             i[3]=sigma_new
             #print(f" {cape} Rating, RD, sigma:{rating_new}, {rd_new}, {sigma_new}")
-    
+
     with open(f"glicko{loc}.txt",mode="r+") as f:
         f.seek(0)
         f.truncate()
         json.dump(rankings,f)
-    
-    if inv==False:
+
+    if inv is False:
         for i in rankings:
             if i[0]==opponent.casefold():
                 op_rating=round(i[1],1)
         await ctx.send(f"Ratings updated. New rating for {cape}: {round(rating_new,1)} New rating for {opponent}: {op_rating}")
-        
+
 
 def g_phi(rd_cape):
     g_phi_r=1/(math.sqrt(1+(3*(rd_cape**2)/math.pi**2)))
     return g_phi_r
 
-@bot.group( description="Available commands: show, make, update, income. Show your balance, Make an account, Update your balance, Increase your weekly income.")
+
+@bot.group(description="Available commands: show, make, update, income. Show your balance, Make an account, Update your balance, Increase your weekly income.",aliases=["acc"])
 async def account(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send('Available commands: show, make, update, income. Show your balance, Make an account, Update your balance, Increase your weekly income.')
 
-@account.command( description="Check how many more donuts you can afford.")
+
+@account.command(description="Check how many more donuts you can afford.")
 async def show(ctx, cape=None):
     loc=ctx.message.guild.id
     with open(f"cash{loc}.txt") as f:
@@ -1782,16 +2258,17 @@ async def show(ctx, cape=None):
             await ctx.send(f"Balance for {cape}: {i[1]}$. Income: {i[2]}$.")
     #print(accounts)
 
-@account.command( description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.")
+
+@account.command(description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.", alias="create")
 async def make(ctx,cape=None,amount=0,income=0):
     loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
         await ctx.send("BoK only operates in #faction-actions!")
         return
-    if cape==None:
+    if cape is None:
         await ctx.send("I do need a name for you if this is going to work.")
     entry=[]
-    entry.append(cape.casefold()) 
+    entry.append(cape.casefold())
     entry.append(int(amount))
     entry.append(int(income))
     if os.path.isfile(f"cash{loc}.txt"):
@@ -1805,14 +2282,15 @@ async def make(ctx,cape=None,amount=0,income=0):
             accounts.append(entry)
             json.dump(accounts,f)
     else:
-         with open(f"cash{loc}.txt",mode="w+") as f:
-             accounts=[]
-             f.seek(0)
-             f.truncate()
-             accounts.append(entry)
-             json.dump(accounts,f)
+        with open(f"cash{loc}.txt",mode="w+") as f:
+            accounts=[]
+            f.seek(0)
+            f.truncate()
+            accounts.append(entry)
+            json.dump(accounts,f)
     await ctx.send(f"Account opened for {cape}. Amount: {amount}$. Income: {income}$. Welcome to Bank of Kingfisher!")
-    
+
+
 @account.command(aliases=["u"], description="Keep track of expenses and gains with this.")
 async def update(ctx,cape, amount):
     loc=ctx.message.guild.id
@@ -1825,7 +2303,7 @@ async def update(ctx,cape, amount):
     for i in accounts:
         if i[0]==cape.casefold():
             c1=i
-    if c1==False:
+    if c1 is False:
         await ctx.send(f"Cannot find {cape}.")
     for i in accounts:
         if i[0]==cape.casefold():
@@ -1835,9 +2313,10 @@ async def update(ctx,cape, amount):
         f.seek(0)
         f.truncate()
         json.dump(accounts,f)
-        
+
+
 @account.command(aliases=["s"], description="Send money to another account.")
-async def send(ctx,cape,target, amount):        
+async def send(ctx,cape,target, amount):
     loc=ctx.message.guild.id
     if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
         await ctx.send("BoK only operates in #faction-actions!")
@@ -1850,9 +2329,9 @@ async def send(ctx,cape,target, amount):
             c1=i
         if i[0]==target.casefold():
             c2=i
-    if c1==False:
+    if c1 is False:
         await ctx.send(f"Cannot find sender {cape}.")
-    if c2==False:
+    if c2 is False:
         await ctx.send(f"Cannot find receiver {target}.")
     for i in accounts:
         if i[0]==cape.casefold():
@@ -1864,7 +2343,8 @@ async def send(ctx,cape,target, amount):
     with open(f"cash{loc}.txt",mode="r+") as f:
         f.seek(0)
         f.truncate()
-        json.dump(accounts,f)    
+        json.dump(accounts,f)
+
 
 @account.command(aliases=["i"], description="Adjust your periodic income here. Use the weekly amount.")
 async def income(ctx,cape, amount):
@@ -1878,7 +2358,7 @@ async def income(ctx,cape, amount):
     for i in accounts:
         if i[0]==cape.casefold():
             c1=i
-    if c1==False:
+    if c1 is False:
         await ctx.send(f"Cannot find {cape}.")
     for i in accounts:
         if i[0]==cape.casefold():
@@ -1888,12 +2368,10 @@ async def income(ctx,cape, amount):
         f.seek(0)
         f.truncate()
         json.dump(accounts,f)
-        
-    
+
 
 async def account_decay():
         while True:
-
             #trying a dirty fix for the reminders issue.
             reminders=[]
             with open(f"reminders.txt",mode="w+") as f:
@@ -1903,7 +2381,6 @@ async def account_decay():
                 for i in queue:
                     reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
                 json.dump(reminders,f)
-
 
             locs=[465651565089259521,457290411698814980]
             decay=0.9**(1/7) #10% decay per week
@@ -1953,7 +2430,7 @@ async def account_decay():
                         last_updated.append(time.time())
                         json.dump(last_updated,f)
             await asyncio.sleep(60*60*3) # task runs every 3 hours
-        
+
 
 async def rank_decay():
         c= 60 # c = 60, assuming a rating decay period of a month, and a typical rating of 150
@@ -2000,17 +2477,23 @@ async def rank_decay():
                     last_updated=[]
                     last_updated.append(time.time())
                     json.dump(last_updated,f)
-            await asyncio.sleep(60*60*3) # task runs every 3 hours      
-        
+            await asyncio.sleep(60*60*3) # task runs every 3 hours
+
 
 ###Bot runs here
 schedstop = threading.Event()
+
+
 def timer():
     while not schedstop.is_set():
         sPlanner.run(blocking=False)
         time.sleep(1)
+
+
 schedthread = threading.Thread(target=timer)
 schedthread.start()
 with open("Token.txt", 'r') as f:
         token=f.read()
+yaml=YAML()
+yaml.default_flow_style=False
 bot.run(token)

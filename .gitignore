@@ -102,15 +102,20 @@ ENV/
 Token.txt
 Token_server.txt
 gspread.json
+Reference.txt
 
 .htaccess
 #folders
 luck/
 rolls/
 serverfiles/
+map_gh/backup
 .vscode/
 glicko_decay465651565089259521.txt
+glicko465651565089259521.txt
 decay465651565089259521.txt
 reminders.txt
 roll_macros.txt
 decay457290411698814980.txt
+bm.yaml
+.flake8
