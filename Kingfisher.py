@@ -11,9 +11,10 @@ import platform
 import random
 import re
 import sched
+import sys
 import time
 import threading
-#import traceback
+import traceback
 
 
 import discord  # the crown jewel
@@ -21,7 +22,7 @@ import aiohttp
 import gspread
 import pytz
 from discord.ext import commands
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Cog
 from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
@@ -41,7 +42,7 @@ version = "0.2.1a Turn Tracker"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions = {"grove":ImageColor.getrgb("#c9781e"),"apex":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),"labyrinth":ImageColor.getrgb("#bff360"),
+gh_factions = {"grove":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
                "phalanx":ImageColor.getrgb("#ffcc00"),
                "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
@@ -51,7 +52,7 @@ gh_factions = {"grove":ImageColor.getrgb("#c9781e"),"apex":ImageColor.getrgb("#c
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
 #"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
 #"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,
-#"avalon":(173, 20, 87),"uplift":(26, 151, 73),
+#"avalon":(173, 20, 87),"uplift":(26, 151, 73), "veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),
 
 # discord default colours: https://www.reddit.com/r/discordapp/comments/849bxc/what_are_the_hex_values_of_all_the_default_role/dvo5k3g/
 
@@ -335,10 +336,36 @@ async def on_message(message):
                 await target.send(f"**{message.content}** sent by {message.author.name}, ID `{message.author.id}` at {message.created_at}")
                 await message.delete()
 
+            #custom messages. Mostly jokes.
+            elif message.content==("DOCTOR NEFARIOUS"):
+                await message.channel.send("🍋")
+            elif message.content==("Kingfisher, play Despacito"):
+                await message.channel.send("ɴᴏᴡ ᴘʟᴀʏɪɴɢ: Despacito \n ───────────────⚪─────────────────── \n  ◄◄⠀▐▐ ⠀►►⠀⠀ ⠀ 1:17 / 3:48 ⠀ ───○ 🔊⠀ ᴴᴰ ⚙ ❐ ⊏⊐")
+
         await bot.process_commands(message)
 
     except:
         await bot.process_commands(message)
+
+
+@bot.event
+async def on_command_error(context, exception):
+        print(exception)
+        print(type(exception))
+
+        if hasattr(context.command, 'on_error'):
+            return
+
+        cog = context.cog
+        if cog:
+            if Cog._get_overridden_method(cog.cog_command_error) is not None:
+                return
+
+        if type(exception)==discord.ext.commands.errors.CommandOnCooldown:
+            await context.send(exception)
+
+        print('Ignoring exception in command {}:'.format(context.command), file=sys.stderr)
+        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
 
 @bot.command(description="Makes the bot leave the server.",hidden=True)
@@ -1855,6 +1882,7 @@ async def show(ctx,init="False"):
 
 
 @bot.command(description="You can remove people (like KO'd characters) by using the >kick command on their turn, or entering their name.")
+@commands.cooldown(1,10,commands.BucketType.channel)
 async def kick(ctx,*user):
     #kick whoevers turn it is by default
     chan=ctx.channel.id
