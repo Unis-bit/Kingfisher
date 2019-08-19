@@ -29,7 +29,7 @@ from pytz import timezone
 from ruamel.yaml import YAML
 from operator import itemgetter
 
-version = "0.2.1a Turn Tracker"
+version = "0.2.1b Turn Tracker"
 ###useful resources
 #for colours
 #www.htmlcsscolor.com/hex
