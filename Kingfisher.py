@@ -27,6 +27,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from PIL import Image, ImageDraw, ImageColor
 from pytz import timezone
 from ruamel.yaml import YAML
+from operator import itemgetter
 
 version = "0.2.1a Turn Tracker"
 ###useful resources
@@ -1836,7 +1837,7 @@ async def end(ctx, force=False,invoked=False,): #start=False
 async def show(ctx,init="False"):
     chan=ctx.channel.id
 
-    print(turn_tracker[chan])
+    #print(turn_tracker[chan])
     init_list=[]
     init_str=""
 
@@ -1846,6 +1847,8 @@ async def show(ctx,init="False"):
     if (turn_tracker[chan]["started"] is False) or init.casefold()=="init":
         for i,j in turn_tracker[chan]["init"].items():
             init_list.append((i,j))
+        #print(init_list)
+        init_list.sort(key=itemgetter(1),reverse=True)
         init_list=list(enumerate(init_list,1))
         init_str=[f"Init so far:"+os.linesep]
         for i in init_list:
@@ -1853,7 +1856,7 @@ async def show(ctx,init="False"):
                 usr= await ctx.guild.fetch_member(i[1][0])
             except:
                 usr=i[1][0]
-            print(type(usr))
+            #print(type(usr))
             if isinstance(usr, discord.member.Member):
                 init_str+=((f"**{i[0]}**. {usr.display_name}  *{i[1][1]}*"+os.linesep))
             else:
