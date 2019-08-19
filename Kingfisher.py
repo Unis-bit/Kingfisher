@@ -1055,6 +1055,7 @@ async def toggle(ctx, req_role="Active"):
     bye_emoji = discord.utils.get(bot.emojis, name='byedog')
     user = ctx.message.author
     loc=await sid(ctx.message.guild.id)
+    opproles=["RED","BLUE","DEEP","GOLD"]
     if req_role.casefold()=="Active".casefold():
         role = discord.utils.get(user.guild.roles, name="Active")
         if role is None:
@@ -1090,64 +1091,72 @@ async def toggle(ctx, req_role="Active"):
 
     elif req_role.casefold()=="RED".casefold():
         role = discord.utils.get(user.guild.roles, name="RED")
-        opprole= discord.utils.get(user.guild.roles, name="BLUE")
+
         if role is None:
             await ctx.send("No RED role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
         if role in user.roles:
             await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
             await user.add_roles(role)
             await ctx.message.add_reaction("\U00002666")
             await ctx.send("Go Team Red Star!")
 
     elif req_role.casefold()=="BLUE".casefold():
         role = discord.utils.get(user.guild.roles, name="BLUE")
-        opprole= discord.utils.get(user.guild.roles, name="RED")
+
         if role is None:
             await ctx.send("No BLUE role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
+        
         if role in user.roles:
             await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
             await user.add_roles(role)
             await ctx.message.add_reaction("\U0001f6e1")
             await ctx.send("Go Team Blue Shield!")
 
     elif req_role.casefold()=="DEEP".casefold():
         role = discord.utils.get(user.guild.roles, name="DEEP")
-        opprole= discord.utils.get(user.guild.roles, name="RED")
+
         if role is None:
             await ctx.send("No DEEP role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
         if role in user.roles:
             await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
             await user.add_roles(role)
             await ctx.message.add_reaction("🌃")
             await ctx.send("To boldly go where no man has gone before.")
 
     elif req_role.casefold()=="GOLD".casefold():
         role = discord.utils.get(user.guild.roles, name="GOLD")
-        opprole= discord.utils.get(user.guild.roles, name="RED")
         if role is None:
             await ctx.send("No GOLD role defined.")
-        if opprole in user.roles:
-            await ctx.send("Oy! No peeking, you cheeky fuck!")
-            return
         if role in user.roles:
             await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
         else:
+            for opprole in opproles:
+                opprole= discord.utils.get(user.guild.roles, name=opprole)
+                if opprole in user.roles:
+                    await ctx.send("Oy! No peeking, you cheeky fuck!")
+                    return
             await user.add_roles(role)
             await ctx.message.add_reaction("🦅")
             await ctx.send("This is Gold Leader. Starting attack run.")
