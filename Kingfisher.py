@@ -36,9 +36,7 @@ version = "0.2.1a Turn Tracker"
 
 
 #TODO: add https://cdn.discordapp.com/attachments/476482380123602946/561997332212875266/lbj5xp1y2hp21.png style colour wheel for new role colour suggestions!
-#TODO: add questping
 #TODO: add self tagging
-#TODO: add round tracker
 #TODO: ranking rework
 #TODO: add server configuration
 
@@ -924,7 +922,7 @@ async def wiki(ctx,*args):
     await ctx.send("https://www.hivewiki.de/start")
 
 
-@bot.command(description="Link a cape's vanwiki article.")
+@bot.command(description="Link a cape's hivewiki article.")
 async def cape(ctx,*cape):
     cape=str(cape).replace(" ", "_")
     cape="".join(cape)
@@ -968,7 +966,6 @@ async def stopspam(ctx, i:int):
         await ctx.send("Insufficient priviliges.")
 
 
-#TODO: fix id
 @bot.command(description="Fuck you.",hidden=True)
 async def mute(ctx,usr):
     if ctx.message.author.id not in owner:
@@ -1112,7 +1109,7 @@ async def toggle(ctx, req_role="Active"):
 
         if role is None:
             await ctx.send("No BLUE role defined.")
-        
+
         if role in user.roles:
             await user.remove_roles(role)
             await ctx.message.add_reaction(bye_emoji)
@@ -1415,7 +1412,6 @@ async def show(ctx,title=None,user=None):
 
 
 #dice rolling.
-#TODO: independent dice
 @bot.command(description="See >tag roll for help",aliases=["r"])
 async def roll(ctx,formula="default",*comment):
     loc=ctx.message.guild.id
