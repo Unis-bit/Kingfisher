@@ -367,8 +367,9 @@ async def on_command_error(context, exception):
         if type(exception)==discord.ext.commands.errors.CommandOnCooldown:
             await context.send(exception)
 
-        print('Ignoring exception in command {}:'.format(context.command), file=sys.stderr)
-        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
+        if not type(exception)==discord.ext.commands.errors.CommandNotFound:
+            print('Ignoring exception in command {}:'.format(context.command), file=sys.stderr)
+            traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
 
 @bot.command(description="Makes the bot leave the server.",hidden=True)
