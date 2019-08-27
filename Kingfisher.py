@@ -2386,7 +2386,7 @@ async def income(ctx,cape, amount):
 
 
 async def account_decay():
-    await asyncio.sleep(60*1)
+    await asyncio.sleep(60*1) #make sure the bot is initialized - this can be fixed better.
     while True:
         #trying a dirty fix for the reminders issue.
         reminders=[]
@@ -2399,23 +2399,24 @@ async def account_decay():
             json.dump(reminders,f)
 
         locs=[465651565089259521,457290411698814980] #testing 434729592352276480
+        #GH_sid 478240151987027978
+        #vanwiki_sid 435874236297379861
 
         #locs=[465651565089259521,457290411698814980,434729592352276480]
         #test_channel=bot.get_channel(435874236297379861) #nest test-dev
 
         decay=0.9**(1/7) #10% decay per week
-        #gh loc="465651565089259521"
-        #vanwiki loc="434729592352276480"
+        #gh loc=465651565089259521
+        #vanwiki loc=434729592352276480
         #LA loc = 457290411698814980
         GH_channel = bot.get_channel(478240151987027978) #GH facacs # channel ID goes here
         LA_channel = bot.get_channel(457640092240969730) #la battle ooc
 
-        #GH 478240151987027978
-        #vanwiki 435874236297379861
         last_updated=[]
         for loc in locs:
             print(loc)
             if os.path.isfile(f"decay{loc}.txt"):
+                print(f"decay{loc}.txt checked and exists")
                 with open(f"decay{loc}.txt",mode="r+") as f:
                     last_updated = json.load(f)
                     if last_updated[0]-time.time()<-60*60*24:
@@ -2466,7 +2467,7 @@ async def account_decay():
 
 
 async def rank_decay():
-    await asyncio.sleep(60*1)
+    await asyncio.sleep(60*1) #make sure the bot is initialized - this can be fixed better.
     c= 60 # c = 60, assuming a rating decay period of a month, and a typical rating of 150
     # c is the result of 350=sqroot(typical rating**2+rating decay period*c)
     loc=465651565089259521
