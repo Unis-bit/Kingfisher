@@ -334,6 +334,10 @@ async def on_message(message):
                 target=discord.utils.find(lambda m:m.id==587718930483773509,message.guild.channels)
                 await target.send(f"**{message.content}** sent by {message.author.name}, ID `{message.author.id}` at {message.created_at}")
                 await message.delete()
+            #private-talk
+            elif message.channel.id==603035662018543618:
+                target=discord.utils.find(lambda m:m.id==614168400523952181,message.guild.channels)
+                await target.send(f"{message.author.name}: **{message.content}** \n (`{message.author.id}` at {message.created_at})")
 
             #custom messages. Mostly jokes.
             elif message.content==("DOCTOR NEFARIOUS"):
@@ -393,6 +397,17 @@ async def order67(ctx):
 @bot.command(description="Need help? Want to ask for new features? Visit the Nest, the central server for all your Kingfisher needs.",hidden=True)
 async def nest(ctx):
     await ctx.send("https://discord.gg/gxQVAbA")
+
+
+@bot.command(description="Deletes message content",hidden=True)
+async def purge(ctx):
+    if ctx.message.author.id not in owner:
+        await ctx.send("😰")
+        return
+    try:
+        await ctx.message.channel.purge(limit=100,bulk=True)
+    except discord.Forbidden:
+        await ctx.send("Insufficient priviliges.")
 
 
 #TODO: Conserve over restarts
@@ -2371,113 +2386,132 @@ async def income(ctx,cape, amount):
 
 
 async def account_decay():
-        while True:
-            #trying a dirty fix for the reminders issue.
-            reminders=[]
-            with open(f"reminders.txt",mode="w+") as f:
-                f.seek(0)
-                f.truncate()
-                queue=sPlanner.queue
-                for i in queue:
-                    reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
-                json.dump(reminders,f)
+    await asyncio.sleep(60*1)
+    while True:
+        #trying a dirty fix for the reminders issue.
+        reminders=[]
+        with open(f"reminders.txt",mode="w+") as f:
+            f.seek(0)
+            f.truncate()
+            queue=sPlanner.queue
+            for i in queue:
+                reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
+            json.dump(reminders,f)
 
-            locs=[465651565089259521,457290411698814980]
-            decay=0.9**(1/7) #10% decay per week
-            #gh loc="465651565089259521"
-            #vanwiki loc="434729592352276480"
-            #LA loc = 457290411698814980
-            channel = bot.get_channel(478240151987027978) # channel ID goes here
-            LA_channel = bot.get_channel(457640092240969730) #la battle ooc
-            #test_channel=bot.get_channel(435874236297379861) #nest test-dev
-            #GH 478240151987027978
-            #vanwiki 435874236297379861
-            last_updated=[]
-            for loc in locs:
-                if os.path.isfile(f"decay{loc}.txt"):
-                    with open(f"decay{loc}.txt",mode="r+") as f:
-                        last_updated = json.load(f)
-                        if last_updated[0]-time.time()<-60*60*24:
-                            print("decaying...")
-                            if os.path.isfile(f"cash{loc}.txt"):
-                                with open(f"cash{loc}.txt",mode="r+") as g:
-                                    accounts = json.load(g)
-                                    g.seek(0)
-                                    g.truncate()
-                                    wealth=0
-                                    for i in accounts:
-                                        if loc==465651565089259521:
-                                            i[1]=round(i[1]*decay)
-                                        i[1]=i[1]+round((i[2]/7))
-                                        wealth+=i[1]
-                                    json.dump(accounts,g)
-                                if loc==465651565089259521:
-                                    await channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
-                                if loc==457290411698814980:
-                                    await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
-                            else:
-                                channel.send("No accounts on file.")
-                            f.seek(0)
-                            f.truncate()
-                            last_updated=[]
-                            last_updated.append(time.time())
-                            json.dump(last_updated,f)
-                else:
-                    with open(f"decay{loc}.txt",mode="w+") as f:
-                        f.seek(0)
-                        f.truncate()
-                        last_updated=[]
-                        last_updated.append(time.time())
-                        json.dump(last_updated,f)
-            await asyncio.sleep(60*60*3) # task runs every 3 hours
+        locs=[465651565089259521,457290411698814980] #testing 434729592352276480
 
+        #locs=[465651565089259521,457290411698814980,434729592352276480]
+        #test_channel=bot.get_channel(435874236297379861) #nest test-dev
 
-async def rank_decay():
-        c= 60 # c = 60, assuming a rating decay period of a month, and a typical rating of 150
-        # c is the result of 350=sqroot(typical rating**2+rating decay period*c)
-        loc=465651565089259521
+        decay=0.9**(1/7) #10% decay per week
         #gh loc="465651565089259521"
         #vanwiki loc="434729592352276480"
-        channel = bot.get_channel(478240151987027978) # channel ID goes here
-        #GH 478240151987027978 facacs
-        #vanwiki 435874236297379861 testing
+        #LA loc = 457290411698814980
+        GH_channel = bot.get_channel(478240151987027978) #GH facacs # channel ID goes here
+        LA_channel = bot.get_channel(457640092240969730) #la battle ooc
+
+        #GH 478240151987027978
+        #vanwiki 435874236297379861
         last_updated=[]
-        while True:
-            if os.path.isfile(f"glicko_decay{loc}.txt"):
-                with open(f"glicko_decay{loc}.txt",mode="r+") as f:
+        for loc in locs:
+            print(loc)
+            if os.path.isfile(f"decay{loc}.txt"):
+                with open(f"decay{loc}.txt",mode="r+") as f:
                     last_updated = json.load(f)
                     if last_updated[0]-time.time()<-60*60*24:
-                        if os.path.isfile(f"glicko{loc}.txt"):
-                            with open(f"glicko{loc}.txt",mode="r+") as g:
-                                ranks = json.load(g)
+                        print("decaying...")
+                        if os.path.isfile(f"cash{loc}.txt"):
+                            print("file exists")
+                            with open(f"cash{loc}.txt",mode="r+") as g:
+                                print("file opened")
+                                accounts = json.load(g)
                                 g.seek(0)
                                 g.truncate()
-                                avg_rank=0
-                                avg_rd=0
-                                for i in ranks:
-                                    if i[2]>150:
-                                        i[2]=min(round(math.sqrt(i[2]**2+c**2),2),350)
-                                    else:
-                                        i[2]=min(round(math.sqrt(i[2]**2+(c/2)**2),2),350)
-                                    avg_rank+=i[1]
-                                    avg_rd+=i[2]
-                                json.dump(ranks,g)
-                            await channel.send(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
+                                wealth=0
+                                for i in accounts:
+                                    if loc==465651565089259521 or loc==434729592352276480:
+                                        i[1]=round(i[1]*decay)
+                                    i[1]=i[1]+round((i[2]/7))
+                                    wealth+=i[1]
+                                json.dump(accounts,g)
+
+                            print("Daily wealth message block reached")
+                            if loc==465651565089259521:
+                                print("printing Daily wealth message")
+                                await GH_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                                print("printed.")
+                            if loc==457290411698814980:
+                                await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            #if loc==434729592352276480:
+                            #      print(test_channel)
+                            #      await test_channel.send("henlo")
+                            #      await test_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                         else:
-                            channel.send("No ranks existing!")
+                            print(f"No accounts on file for {loc}.")
+                            #await test_channel.send("No accounts on file.")
                         f.seek(0)
                         f.truncate()
                         last_updated=[]
                         last_updated.append(time.time())
                         json.dump(last_updated,f)
             else:
-                with open(f"glicko_decay{loc}.txt",mode="w+") as f:
+                with open(f"decay{loc}.txt",mode="w+") as f:
+                    print("No decay file.")
                     f.seek(0)
                     f.truncate()
                     last_updated=[]
                     last_updated.append(time.time())
                     json.dump(last_updated,f)
-            await asyncio.sleep(60*60*3) # task runs every 3 hours
+        await asyncio.sleep(60*60*3) # task runs every 3 hours
+
+
+async def rank_decay():
+    await asyncio.sleep(60*1)
+    c= 60 # c = 60, assuming a rating decay period of a month, and a typical rating of 150
+    # c is the result of 350=sqroot(typical rating**2+rating decay period*c)
+    loc=465651565089259521
+    #gh loc="465651565089259521"
+    #vanwiki loc="434729592352276480"
+    channel = bot.get_channel(478240151987027978) # channel ID goes here
+    #GH 478240151987027978 facacs
+    #vanwiki 435874236297379861 testing
+    last_updated=[]
+    while True:
+        if os.path.isfile(f"glicko_decay{loc}.txt"):
+            with open(f"glicko_decay{loc}.txt",mode="r+") as f:
+                last_updated = json.load(f)
+                if last_updated[0]-time.time()<-60*60*24:
+                    if os.path.isfile(f"glicko{loc}.txt"):
+                        with open(f"glicko{loc}.txt",mode="r+") as g:
+                            ranks = json.load(g)
+                            g.seek(0)
+                            g.truncate()
+                            avg_rank=0
+                            avg_rd=0
+                            for i in ranks:
+                                if i[2]>150:
+                                    i[2]=min(round(math.sqrt(i[2]**2+c**2),2),350)
+                                else:
+                                    i[2]=min(round(math.sqrt(i[2]**2+(c/2)**2),2),350)
+                                avg_rank+=i[1]
+                                avg_rd+=i[2]
+                            json.dump(ranks,g)
+                        await channel.send(f"Daily RD decay computed. Average Rating: {round(avg_rank/len(ranks),0)} Average RD: {round(avg_rd/len(ranks),0)}")
+                    else:
+                        channel.send("No ranks existing!")
+                    f.seek(0)
+                    f.truncate()
+                    last_updated=[]
+                    last_updated.append(time.time())
+                    json.dump(last_updated,f)
+        else:
+            with open(f"glicko_decay{loc}.txt",mode="w+") as f:
+                f.seek(0)
+                f.truncate()
+                last_updated=[]
+                last_updated.append(time.time())
+                json.dump(last_updated,f)
+        await asyncio.sleep(60*60*3) # task runs every 3 hours
 
 
 ###Bot runs here
