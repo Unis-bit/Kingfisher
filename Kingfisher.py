@@ -1481,6 +1481,7 @@ async def roll(ctx,formula="default",*comment):
             keep=True
     #print(f"dice: {dice}")
 
+    modifier=0
     if ("+" in formula) or ("-" in formula):
         if ("++" in formula) or ("--" in formula):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
@@ -1493,9 +1494,7 @@ async def roll(ctx,formula="default",*comment):
             modifier=int(mod_match.group())
     else:
         if dice==20:
-            modifier=4
-        else:
-            modifier=0
+            modifier=4+modifier
     #print(f"modifier: {modifier}")
 
     brief=False
