@@ -41,7 +41,7 @@ version = "0.2.1b Turn Tracker"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions = {"grove":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
+gh_factions = {"crew":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
                "phalanx":ImageColor.getrgb("#ffcc00"),"evil":(173, 20, 87),"legion":ImageColor.getrgb("#3498db"),"lambs":ImageColor.getrgb("#178080"),
                "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
@@ -337,7 +337,7 @@ async def on_message(message):
             #private-talk
             elif message.channel.id==603035662018543618:
                 target=discord.utils.find(lambda m:m.id==614168400523952181,message.guild.channels)
-                await target.send(f"{message.author.name}: **{message.content}** \n (`{message.author.id}` at {message.created_at})")
+                await target.send(f"{message.author.name}: {message.content} \n (`{message.author.id}` at {message.created_at})")
 
             #custom messages. Mostly jokes.
             elif message.content==("DOCTOR NEFARIOUS"):
@@ -1471,6 +1471,7 @@ async def roll(ctx,formula="default",*comment):
     else:
         if "c" in formula.casefold():
             dice=10
+            modifier=5
             keep=True
         else:
             if (s_id=="portland"):
@@ -1626,6 +1627,8 @@ async def roll(ctx,formula="default",*comment):
                 else:
                     out_roll.append(f"{brief_match[k]}, ")
     if comment!="":
+        if comment[0]=="#" and comment[1]=="#":
+            comment=comment[1:]
         out_roll.append(f" #{' '.join(comment)}")
     await ctx.send(''.join(out_roll))
 
@@ -1846,7 +1849,7 @@ async def end(ctx, force=False,invoked=False,): #start=False
 
             if (i[3]==rem_turn) and (i[1]==cur_round):
                 name=await naming(ctx.guild,i[0])
-                await ctx.send(f"Reminder for {name} {i[2]}")
+                await ctx.send(f"Reminder for {name}: {i[2]}")
                 turn_tracker[chan]["reminder"].remove(i)
 
     turn_tracker[chan].update({"turn":cur_turn+1})
