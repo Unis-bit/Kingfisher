@@ -1459,7 +1459,7 @@ async def roll(ctx,formula="default",*comment):
         formula="1d6"
     elif formula=="default":
         formula="3d20+4"
-
+    modifier=0
     if "d" in formula.casefold():
         d_pattern=re.compile("(d|D)(\d)*")
         d_match=d_pattern.search(formula)
@@ -1481,7 +1481,6 @@ async def roll(ctx,formula="default",*comment):
             keep=True
     #print(f"dice: {dice}")
 
-    modifier=0
     if ("+" in formula) or ("-" in formula):
         if ("++" in formula) or ("--" in formula):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
