@@ -1486,7 +1486,10 @@ async def roll(ctx,formula="default",*comment):
             mod_pattern=re.compile("(\+\+|\-\-)(\d)*")
             mod_match=mod_pattern.search(formula)
             modifier=int(mod_match.group()[1:])
-            modifier=4+modifier
+            if "c" in formula.casefold():
+                modifier=5+modifier
+            else:
+                modifier=4+modifier
         else:
             mod_pattern=re.compile("(\+|\-)+(\d)*")
             mod_match=mod_pattern.search(formula)
