@@ -41,8 +41,8 @@ version = "0.2.1b Turn Tracker"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions = {"crew":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
-               "phalanx":ImageColor.getrgb("#ffcc00"),"evil":(173, 20, 87),"legion":ImageColor.getrgb("#3498db"),"lambs":ImageColor.getrgb("#178080"),
+gh_factions = {"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
+               "phalanx":ImageColor.getrgb("#ffcc00"),"evil":(173, 20, 87),"legion":ImageColor.getrgb("#3498db"),"ghpd":ImageColor.getrgb("#b8d6e7"),
                "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
 #
@@ -52,6 +52,7 @@ gh_factions = {"crew":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#
 #"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
 #"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,
 #"avalon":(173, 20, 87),"uplift":(26, 151, 73), "veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),
+#"crew":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),lambs":ImageColor.getrgb("#178080"),
 
 # discord default colours: https://www.reddit.com/r/discordapp/comments/849bxc/what_are_the_hex_values_of_all_the_default_role/dvo5k3g/
 
@@ -1013,6 +1014,14 @@ async def echo(ctx,*echo):
     print(ctx.message.channel)
     print(ctx.message.channel.id)
     await ctx.send(" ".join(echo))
+
+
+@bot.command(description="Math.", aliases=["m"],hidden=True)
+async def math(ctx,formula):
+    if ctx.message.author.id not in owner:
+        await ctx.send("Math is banned.")
+        return
+    await ctx.send(f"`{formula}`= {eval(formula)}") #using eval is quite unsafe
 
 
 @bot.command(name="time",description="Stuck in bubble hell? Wonder when giao will be back?")
