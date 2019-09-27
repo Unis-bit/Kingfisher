@@ -1017,7 +1017,7 @@ async def echo(ctx,*echo):
 
 
 @bot.command(description="Math.", aliases=["m"],hidden=True)
-async def math(ctx,formula):
+async def calc(ctx,formula):
     if ctx.message.author.id not in owner:
         await ctx.send("Math is banned.")
         return
