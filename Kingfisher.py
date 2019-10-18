@@ -41,18 +41,19 @@ version = "0.2.1b Turn Tracker"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions = {"vanguard":ImageColor.getrgb("#2ec870"),"labyrinth":ImageColor.getrgb("#bff360"),
+gh_factions = {"empire":ImageColor.getrgb("#f05e1b"),"labyrinth":ImageColor.getrgb("#bff360"),
                "phalanx":ImageColor.getrgb("#ffcc00"),"evil":(173, 20, 87),"legion":ImageColor.getrgb("#3498db"),"ghpd":ImageColor.getrgb("#b8d6e7"),
-               "lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),"neutral":(255,255,255), "independent":(163, 145, 108)}
+               "neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
 #
 #old factions: "division":(76, 140, 255), "prestige":(179, 86, 243), "daybreak":(236,42,18), "elite":(241, 196, 15),
-# "demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
+#"demons":ImageColor.getrgb("#ff7a00"),"valhalla":(241, 196, 15),
 #"court":(101, 111, 255),"dominion":(192, 49, 53),"children":(155, 89, 182),"fixers":ImageColor.getrgb("#f8e900"),
 #"prosperity":ImageColor.getrgb("#d4af37") "safeguard":ImageColor.getrgb("#8f34e2")
 #"warmongers":ImageColor.getrgb("#f18f22"),"haven":ImageColor.getrgb("#a26cfc"),"union":ImageColor.getrgb("#c40000"),"stronghold":ImageColor.getrgb("#7498b4") ,
 #"avalon":(173, 20, 87),"uplift":(26, 151, 73), "veil":ImageColor.getrgb("#3498db"),"royals":ImageColor.getrgb("#ff69b4"),
-#"crew":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),lambs":ImageColor.getrgb("#178080"),
+#"crew":ImageColor.getrgb("#c9781e"),"utopia":ImageColor.getrgb("#c72727"),lambs":ImageColor.getrgb("#178080"),"vanguard":ImageColor.getrgb("#2ec870"),
+#"lost":ImageColor.getrgb("#ffb293"),"convocation":ImageColor.getrgb("#8949ca"),
 
 # discord default colours: https://www.reddit.com/r/discordapp/comments/849bxc/what_are_the_hex_values_of_all_the_default_role/dvo5k3g/
 
@@ -206,6 +207,8 @@ async def int_to_roman(input):
 async def sid(loc):
     if loc==465651565089259521:
         sid="gh"
+    elif loc==573815526133071873:
+        sid="gh" #shardforge server, attached to GH
     elif loc==406587085278150656:
         sid="segovia"
     elif loc==434729592352276480:
@@ -328,23 +331,37 @@ async def on_message(message):
         #checks-public 587718887936753710
         #checks-private 587718930483773509
 
+        #talk-private 603035662018543618
+        #talk-private-archive 614168400523952181
+
+        #quest-request 601810695583039557
+
         #test-beta 538633337191923714
         #test-dev 435874236297379861
         if not_me(message):
             if message.channel.id==587718887936753710:
                 target=discord.utils.find(lambda m:m.id==587718930483773509,message.guild.channels)
-                await target.send(f"**{message.content}** sent by {message.author.name}, ID `{message.author.id}` at {message.created_at}")
+                await target.send(f"**{message.content}** sent by {message.author.name}, ID `{message.author.id}` at {message.created_at}",files=message.attachments)
                 await message.delete()
             #private-talk
             elif message.channel.id==603035662018543618:
                 target=discord.utils.find(lambda m:m.id==614168400523952181,message.guild.channels)
-                await target.send(f"{message.author.name}: {message.content} \n (`{message.author.id}` at {message.created_at})")
+                await target.send(f"{message.author.name}: {message.content}")
+            elif message.channel.id==601810695583039557:
+                target=await message.channel.fetch_message(601812539319386123)
+                target=discord.utils.get(target.reactions,emoji="\U0000270d") #writing hand
+                usrs=await target.users().flatten()
+                if message.author not in usrs:
+                    await message.channel.send(f"{message.author.mention}: Think you're above the rules, huh? Read the pins, you illiterate baboon. Denied.")
+                    await message.delete()
 
             #custom messages. Mostly jokes.
             elif message.content==("DOCTOR NEFARIOUS"):
                 await message.channel.send("🍋")
             elif message.content==("Kingfisher, play Despacito"):
                 await message.channel.send("ɴᴏᴡ ᴘʟᴀʏɪɴɢ: Despacito \n ───────────────⚪─────────────────── \n  ◄◄⠀▐▐ ⠀►►⠀⠀ ⠀ 1:17 / 3:48 ⠀ ───○ 🔊⠀ ᴴᴰ ⚙ ❐ ⊏⊐")
+            elif message.content==("F"):
+                await message.channel.send("f")
 
         await bot.process_commands(message)
 
@@ -402,14 +419,26 @@ async def nest(ctx):
 
 
 @bot.command(description="Deletes message content",hidden=True)
-async def purge(ctx):
+async def purge(ctx,limiter=100):
     if ctx.message.author.id not in owner:
         await ctx.send("😰")
         return
     try:
-        await ctx.message.channel.purge(limit=100,bulk=True)
+        await ctx.message.channel.purge(limit=limiter,bulk=True)
     except discord.Forbidden:
         await ctx.send("Insufficient priviliges.")
+
+
+@bot.command(description="New UTF release, who dis",hidden=True)
+async def emojiwatch(ctx,id):
+    target=await ctx.message.channel.fetch_message(id)
+    print(target.reactions)
+    target=discord.utils.get(target.reactions,emoji="\U0000270d") #writing hand
+    usrs=await target.users().flatten()
+    print(usrs)
+    print(usrs[0])
+    if ctx.author in usrs:
+        print("True!")
 
 
 #TODO: Conserve over restarts
