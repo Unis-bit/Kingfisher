@@ -733,7 +733,7 @@ async def augment(ctx, classification=None, card=None):
         return
     augcolour=discord.Colour(0xBF9000)
     classifications=["blaster","breaker","brute","changer","master","mover","shaker","stranger","striker","tinker","thinker","trump"]
-    cards=["fool","magi","nun","lady","lord","pope","lovers","chariot","strength","hermit","wheel","justice","hanged","death","temperance","devil","tower","star","moon","sun","judgement","world"]
+    cards=["fool","magi","priestess","lady","lord","pope","lovers","chariot","strength","hermit","wheel","justice","hanged","death","temperance","devil","tower","star","moon","sun","judgement","world"]
     if classification in cards:
         await ctx.send(augfeed[cards.index(classification)+1][1])
         return
