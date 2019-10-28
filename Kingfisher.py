@@ -41,7 +41,7 @@ version = "0.2.1c Newmap1"
 #TODO: add server configuration
 
 #gh stuff
-gh_factions = {"empire":ImageColor.getrgb("#f05e1b"),"labyrinth":ImageColor.getrgb("#bff360"),
+gh_factions = {"outcasts":ImageColor.getrgb("#7954a8"),"empire":ImageColor.getrgb("#f05e1b"),"labyrinth":ImageColor.getrgb("#bff360"),
                "phalanx":ImageColor.getrgb("#ffcc00"),"evil":(173, 20, 87),"legion":ImageColor.getrgb("#3498db"),"ghpd":ImageColor.getrgb("#b8d6e7"),
                "neutral":(255,255,255), "independent":(163, 145, 108)}
 #"x":ImageColor.getrgb("x"),
@@ -230,6 +230,8 @@ async def sid(loc):
         sid="gaming_inc"
     elif loc==570300070252249089:
         sid="portland"
+    elif loc==636431438916616192:
+        sid="deathland"
     else:
         sid="undefined"
     return sid
@@ -2328,7 +2330,8 @@ async def show(ctx, cape=None):
 @account.command(description="Use this to add your cape to the database and gain access to the other commands. Your cape name is your 'key'.", alias="create")
 async def make(ctx,cape=None,amount=0,income=0):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
+    if (ctx.message.channel.id != 478240151987027978 and ctx.message.channel.id != 435874236297379861 and ctx.message.channel.id != 537152965375688719
+            and ctx.guild.id!=457290411698814980 and ctx.message.channel.id != 638118490628292612):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     if cape is None:
@@ -2360,7 +2363,8 @@ async def make(ctx,cape=None,amount=0,income=0):
 @account.command(aliases=["u"], description="Keep track of expenses and gains with this.")
 async def update(ctx,cape, amount):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
+    if (ctx.message.channel.id != 478240151987027978 and ctx.message.channel.id != 435874236297379861 and ctx.message.channel.id != 537152965375688719
+            and ctx.guild.id!=457290411698814980 and ctx.message.channel.id != 638118490628292612):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -2384,7 +2388,8 @@ async def update(ctx,cape, amount):
 @account.command(aliases=["s"], description="Send money to another account.")
 async def send(ctx,cape,target, amount):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
+    if (ctx.message.channel.id != 478240151987027978 and ctx.message.channel.id != 435874236297379861 and ctx.message.channel.id != 537152965375688719
+            and ctx.guild.id!=457290411698814980 and ctx.message.channel.id != 638118490628292612):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -2415,7 +2420,8 @@ async def send(ctx,cape,target, amount):
 @account.command(aliases=["i"], description="Adjust your periodic income here. Use the weekly amount.")
 async def income(ctx,cape, amount):
     loc=ctx.message.guild.id
-    if (ctx.message.channel.id != 478240151987027978) and (ctx.message.channel.id != 435874236297379861) and (ctx.message.channel.id != 537152965375688719) and (ctx.guild.id!=457290411698814980):
+    if (ctx.message.channel.id != 478240151987027978 and ctx.message.channel.id != 435874236297379861 and ctx.message.channel.id != 537152965375688719
+            and ctx.guild.id!=457290411698814980 and ctx.message.channel.id != 638118490628292612):
         await ctx.send("BoK only operates in #faction-actions!")
         return
     with open(f"cash{loc}.txt") as f:
@@ -2462,6 +2468,7 @@ async def account_decay():
         #LA loc = 457290411698814980
         GH_channel = bot.get_channel(478240151987027978) #GH facacs # channel ID goes here
         LA_channel = bot.get_channel(457640092240969730) #la battle ooc
+        DL_channel = bot.get_channel(636431438916616192)
 
         last_updated=[]
         for loc in locs:
@@ -2481,7 +2488,7 @@ async def account_decay():
                                 g.truncate()
                                 wealth=0
                                 for i in accounts:
-                                    if loc==465651565089259521 or loc==434729592352276480:
+                                    if loc==465651565089259521 or loc==434729592352276480 or await sid(loc)=="deathland":
                                         i[1]=round(i[1]*decay)
                                     i[1]=i[1]+round((i[2]/7))
                                     wealth+=i[1]
@@ -2494,6 +2501,8 @@ async def account_decay():
                                 print("printed.")
                             if loc==457290411698814980:
                                 await LA_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
+                            if await sid(loc)=="deathland":
+                                await DL_channel.send(f"Daily Expenses computed. Total accrued wealth: {wealth}$")
                             #if loc==434729592352276480:
                             #      print(test_channel)
                             #      await test_channel.send("henlo")
