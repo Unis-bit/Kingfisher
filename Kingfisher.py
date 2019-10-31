@@ -121,6 +121,8 @@ augSheet = RefSheet.worksheet("Augments")
 augfeed = augSheet.get_all_values()
 triggerSheet = RefSheet.worksheet("Triggers")
 triggerfeed = triggerSheet.get_all_values()
+pactfeed = RefSheet.worksheet("Pactluck")
+pactfeed = pactfeed.get_all_values()
 
 #vials
 VialDoc = gc.open_by_key("1yksmYY7q1GKx4tXVpb7oSxffgEh--hOvXkDwLVgCdlg") # arcan's vial doc
@@ -595,6 +597,8 @@ async def updateFeed(ctx):
     augfeed = augSheet.get_all_values()
     triggerSheet = RefSheet.worksheet("Triggers")
     triggerfeed = triggerSheet.get_all_values()
+    pactfeed = RefSheet.worksheet("Pactluck")
+    pactfeed = pactfeed.get_all_values()
     await ctx.message.add_reaction("\U00002714")
 
 
@@ -761,6 +765,28 @@ async def augment(ctx, classification=None, card=None):
                     return
                     #await ctx.send(augs[i])
         await ctx.send(f"No {card.title()} augment defined.")
+
+
+@bot.command(description="",aliases=["pluck"])
+async def pactluck(ctx, judgement=None):
+    global pactfeed
+    #print(pactfeed)
+    if judgement is None:
+        await ctx.send("Need to know the judgement. Upright or reverse (good or bad)?")
+        return
+    augcolour=discord.Colour(0xBF9000)
+    #cards=["Fool","Magician","Priestess","Empress","Emperor","Hierophant","Lovers","Chariot","Justice","Hermit","Wheel of Fortune","Strength","Hanged Man","Death","Temperance","Devil","Tower","Star","Moon","Sun","Judgement","World"]
+    if judgement=="upright":
+        augindex=1
+    elif judgement=="reverse":
+        augindex=2
+    else:
+        await ctx.send("Need to know the judgement. Upright or reverse (good or bad)?")
+        return
+    out=random.randint(1,len(pactfeed)-1)
+    if pactfeed[out][augindex]!="":
+            embed = discord.Embed(title=f"{pactfeed[out][0]} Augment",description=pactfeed[out][augindex],colour=augcolour)
+            await ctx.send(embed=embed)
 
 
 @bot.command(description="Trigger warning.")
@@ -2455,9 +2481,10 @@ async def account_decay():
                 reminders.append({"time":i[0],'content':i.argument[0].cr_frame.f_locals['content'],'destination':i.argument[0].cr_frame.f_locals['self'].id})
             json.dump(reminders,f)
 
-        locs=[465651565089259521,457290411698814980] #testing 434729592352276480
+        locs=[465651565089259521,457290411698814980,636431438916616192] #testing 434729592352276480
         #GH_sid 478240151987027978
         #vanwiki_sid 435874236297379861
+        #deathland 636431438916616192
 
         #locs=[465651565089259521,457290411698814980,434729592352276480]
         #test_channel=bot.get_channel(435874236297379861) #nest test-dev
