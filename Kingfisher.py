@@ -1045,7 +1045,38 @@ async def _time(ctx,):
 
     await ctx.send(embed=embed)
 
-
+@bot.command(description="Sets your active cape. Certain commands like account, win/loss, and rank default to your active cape.")
+async def active(ctx,cape=None):
+    if cape is None:
+	    with open(f"capes{loc}.txt",mode="r+") as f:
+	    	activeCapes=json.loaf(f)
+     		if ctx.author.id in sum(capes,[]):
+    	  	pop(index(ctx.author.id))
+    		  await ctx.send("Active cape cleared")
+       	else
+    		  await ctx.send("You have no active cape to clear. Please input a name.")
+      entry=[]
+      entry.append(ctx.author.id)
+      entry.append(cape.casefold())
+      if os.path.isfile(f"capes{loc}.txt"):
+          with open(f"capes{loc}.txt",mode="r+") as f:
+              activeCapes= json.load(f)
+		          if ctx.author.id in sum(capes,[]):
+          			pop(index(ctx.author.id))
+          			await ctx.send("Active cape cleared")
+              f.seek(0)
+              f.truncate()
+              activeCapes.append(entry)
+              json.dump(activeCapes,f)
+      else:
+          with open(f"capes{loc}.txt",mode="w+") as f:
+              activeCapes=[]
+              f.seek(0)
+              f.truncate()
+              activeCapes.append(entry)
+              json.dump(activeCapes,f)
+      await ctx.send(f"Your active cape is now set to {cape}.")
+                                    
 #TODO: Better QoL, list options, better configuration
 @bot.command(description="Gives (or removes) self-serve roles.")
 async def toggle(ctx, req_role="Active"):
@@ -2028,6 +2059,11 @@ async def ladder(ctx, mode="lax"):
 @rank.command()
 async def show(ctx, cape=None):
     loc=ctx.message.guild.id
+	  with open(f"capes{loc}.txt",mode="r+") as f:
+        capes = json.load(f)
+	  for i in capes:
+		    if i[0]==ctx.author.id
+			      cape==i[1]
     if cape is None:
         await ctx.send(f"Forgot something? Maybe your name, {ctx.message.author.display_name}?")
     with open(f"glicko{loc}.txt") as f:
@@ -2250,6 +2286,11 @@ async def account(ctx):
 @account.command(description="Check how many more donuts you can afford.")
 async def show(ctx, cape=None):
     loc=ctx.message.guild.id
+  	with open(f"capes{loc}.txt",mode="r+") as f:
+       capes = json.load(f)
+  	for i in capes:
+	   	if i[0]==ctx.author.id
+			  cape==i[1]
     with open(f"cash{loc}.txt") as f:
         accounts = json.load(f)
     #print(accounts)
