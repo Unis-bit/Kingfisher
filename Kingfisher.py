@@ -1049,11 +1049,11 @@ async def _time(ctx,):
 async def active(ctx,cape=None):
     if cape is None:
 	    with open(f"capes{loc}.txt",mode="r+") as f:
-	    	activeCapes=json.loaf(f)
+	    	activeCapes=json.load(f)
      		if ctx.author.id in sum(capes,[]):
-    	  	pop(index(ctx.author.id))
-    		  await ctx.send("Active cape cleared")
-       	else
+    	  		pop(index(ctx.author.id))
+    		 	 await ctx.send("Active cape cleared")
+       		else
     		  await ctx.send("You have no active cape to clear. Please input a name.")
       entry=[]
       entry.append(ctx.author.id)
@@ -1061,9 +1061,9 @@ async def active(ctx,cape=None):
       if os.path.isfile(f"capes{loc}.txt"):
           with open(f"capes{loc}.txt",mode="r+") as f:
               activeCapes= json.load(f)
-		          if ctx.author.id in sum(capes,[]):
-          			pop(index(ctx.author.id))
-          			await ctx.send("Active cape cleared")
+		if ctx.author.id in sum(capes,[]):
+          		pop(index(ctx.author.id))
+          		await ctx.send("Active cape cleared")
               f.seek(0)
               f.truncate()
               activeCapes.append(entry)
