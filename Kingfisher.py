@@ -1052,7 +1052,8 @@ async def active(ctx,cape=None):
 	    	activeCapes=json.load(f)
      		if ctx.author.id in sum(capes,[]):
     	  		pop(index(ctx.author.id))
-    		 	 await ctx.send("Active cape cleared")
+			json.dump(activeCapes,f)
+    		 	await ctx.send("Active cape cleared")
        		else
     		  await ctx.send("You have no active cape to clear. Please input a name.")
       entry=[]
@@ -1063,6 +1064,7 @@ async def active(ctx,cape=None):
               activeCapes= json.load(f)
 		if ctx.author.id in sum(capes,[]):
           		pop(index(ctx.author.id))
+			json.dump(activeCapes,f)
           		await ctx.send("Active cape cleared")
               f.seek(0)
               f.truncate()
